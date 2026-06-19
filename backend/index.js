@@ -11,8 +11,18 @@ app.use(cors());
 app.use(express.json());
 
 // API test thử
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'success', message: '🚀 Máy chủ Backend đang chạy!' });
+app.get('/api/setup', async (req, res) => {
+  try {
+    // Tự động mã hóa chữ '123456'
+    const hash = await bcrypt.hash('123456', 10);
+    
+    // Cập nhật lại vào Database cho tài khoản admin
+    await db.query("UPDATE users SET password_hash = $1 WHERE username = 'admin'", [hash]);
+    
+    res.send(`<h2>✅ Đã cập nhật lại mật khẩu admin thành: 123456</h2><p>Mã băm mới trong DB là: ${hash}</p>`);
+  } catch (error) {
+    res.send('❌ Lỗi: ' + error.message);
+  }
 });
 
 // ==========================================
