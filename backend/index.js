@@ -133,6 +133,21 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
+// 2. API Lấy danh sách toàn bộ sản phẩm
+app.get('/api/products', async (req, res) => {
+  try {
+    // Sắp xếp theo ID giảm dần (Sản phẩm mới thêm sẽ nằm trên cùng)
+    const result = await db.query('SELECT * FROM products ORDER BY id DESC');
+    res.json({
+      success: true,
+      products: result.rows
+    });
+  } catch (error) {
+    console.error('Lỗi lấy danh sách sản phẩm:', error);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ!' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`=========================================`);
