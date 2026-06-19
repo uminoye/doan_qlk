@@ -1,18 +1,27 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Layout from './components/Layout'; // Kéo Layout vừa tạo vào
+
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" />;
+}
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Đường dẫn mặc định sẽ tạm thời dẫn vào Dashboard */}
-        <Route path="/" element={<Dashboard />} />
-        
-        {/* Đường dẫn trang đăng nhập */}
         <Route path="/login" element={<Login />} />
         
-        {/* Nếu gõ đường dẫn bậy bạ, tự động bắt quay về trang chủ */}
+        {/* Bọc Layout ra bên ngoài các trang dùng chung */}
+        <Route path="/" element={ <PrivateRoute><Layout /></PrivateRoute> }>
+          {/* Dashboard giờ là trang con nằm trong Layout */}
+          <Route index element={<Dashboard />} />
+          
+          {/* Sau này em tạo trang Sales, Kho... thì chỉ cần viết thêm Route con ở đây */}
+        </Route>
+        
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

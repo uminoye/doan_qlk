@@ -1,14 +1,16 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Bổ sung công cụ chuyển trang
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  
+  const navigate = useNavigate(); // Khởi tạo công cụ
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Gửi dữ liệu xuống Backend
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -18,7 +20,12 @@ function Login() {
       const data = await response.json();
       
       if (data.success) {
-        setMessage(`✅ ${data.message} Chào ${data.user.full_name} (${data.user.role})`);
+        // 1. Lưu "thẻ ra vào" (token) và thông tin user vào bộ nhớ trình duyệt
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // 2. Chuyển hướng thẳng vào trang Tổng quan
+        navigate('/');
       } else {
         setMessage(`❌ ${data.message}`);
       }
