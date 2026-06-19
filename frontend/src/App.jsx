@@ -1,60 +1,21 @@
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 function App() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      // Gửi dữ liệu xuống Backend
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setMessage(`✅ ${data.message} Chào ${data.user.full_name} (${data.user.role})`);
-      } else {
-        setMessage(`❌ ${data.message}`);
-      }
-    } catch (error) {
-      setMessage('❌ Lỗi không kết nối được Backend!');
-    }
-  };
-
   return (
-    <div style={{ textAlign: 'center', marginTop: '100px', fontFamily: 'Arial' }}>
-      <h2 style={{ color: '#176b52' }}>Hệ Thống Quản Lý Kho</h2>
-      <form onSubmit={handleLogin} style={{ display: 'inline-block', textAlign: 'left', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Tài khoản:</label><br/>
-          <input 
-            type="text" 
-            value={username} 
-            onChange={e => setUsername(e.target.value)} 
-            style={{ width: '250px', padding: '8px', marginTop: '5px' }}
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Mật khẩu:</label><br/>
-          <input 
-            type="password" 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            style={{ width: '250px', padding: '8px', marginTop: '5px' }}
-          />
-        </div>
-        <button type="submit" style={{ width: '100%', padding: '10px', background: '#176b52', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          Đăng Nhập
-        </button>
-      </form>
-      <p style={{ marginTop: '20px', fontWeight: 'bold' }}>{message}</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Đường dẫn mặc định sẽ tạm thời dẫn vào Dashboard */}
+        <Route path="/" element={<Dashboard />} />
+        
+        {/* Đường dẫn trang đăng nhập */}
+        <Route path="/login" element={<Login />} />
+        
+        {/* Nếu gõ đường dẫn bậy bạ, tự động bắt quay về trang chủ */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

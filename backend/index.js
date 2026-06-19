@@ -62,7 +62,8 @@ app.post('/api/login', async (req, res) => {
         id: user.id,
         username: user.username,
         full_name: user.full_name,
-        role: user.role
+        role: user.role,
+        level: user.level // Thêm dòng này để Frontend lấy được cấp bậc
       }
     });
 
