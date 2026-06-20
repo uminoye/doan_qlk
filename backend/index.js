@@ -26,6 +26,15 @@ app.use('/api/locations', locationRoutes);
 const inboundRoutes = require('./src/routes/inboundRoutes');
 app.use('/api/inbound', inboundRoutes);
 
+const inventoryRoutes = require('./src/routes/inventoryRoutes');
+app.use('/api/inventory', inventoryRoutes);
+
+const outboundRoutes = require('./src/routes/outboundRoutes');
+app.use('/api/outbound', outboundRoutes);
+
+const factoryRoutes = require('./src/routes/factoryRoutes');
+app.use('/api/factory', factoryRoutes);
+
 // ==========================================
 // API FIX MẬT KHẨU (Tạm thời để ở đây, mốt rảnh dời sau)
 // ==========================================
