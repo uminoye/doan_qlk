@@ -18,4 +18,25 @@ const getAllProducts = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getAllProducts };
+const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params; // Lấy ID từ đường link
+    const updatedProduct = await productService.editProduct(id, req.body);
+    if (!updatedProduct) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm!' });
+    res.json({ success: true, message: 'Đã cập nhật thành công!', product: updatedProduct });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lỗi khi cập nhật!' });
+  }
+};
+
+const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await productService.removeProduct(id);
+    res.json({ success: true, message: 'Đã xóa sản phẩm khỏi kho!' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lỗi khi xóa! Có thể sản phẩm này đang có tồn kho.' });
+  }
+};
+
+module.exports = { createProduct, getAllProducts, updateProduct, deleteProduct };

@@ -22,4 +22,21 @@ const getAllProducts = async () => {
   return result.rows;
 };
 
-module.exports = { countProductsByPrefix, createProduct, getAllProducts };
+// Sửa thông tin sản phẩm
+const updateProduct = async (id, name, category, brand, size, type, unit, price, img) => {
+  const query = `
+    UPDATE products 
+    SET name = $1, category_code = $2, brand_code = $3, size_or_capacity = $4, 
+        type_detail = $5, unit = $6, sale_price = $7, image_url = $8
+    WHERE id = $9 RETURNING *;
+  `;
+  const result = await db.query(query, [name, category, brand, size, type, unit, price, img, id]);
+  return result.rows[0];
+};
+
+// Xóa sản phẩm
+const deleteProduct = async (id) => {
+  await db.query('DELETE FROM products WHERE id = $1', [id]);
+};
+
+module.exports = { countProductsByPrefix, createProduct, getAllProducts, updateProduct, deleteProduct };

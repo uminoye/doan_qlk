@@ -19,6 +19,12 @@ app.use(express.json());
 const productRoutes = require('./src/routes/productRoutes');
 app.use('/api/products', productRoutes);
 
+// Kéo Tiếp tân quản lý Kho ra làm việc
+const locationRoutes = require('./src/routes/locationRoutes');
+app.use('/api/locations', locationRoutes);
+
+const inboundRoutes = require('./src/routes/inboundRoutes');
+app.use('/api/inbound', inboundRoutes);
 
 // ==========================================
 // API FIX MẬT KHẨU (Tạm thời để ở đây, mốt rảnh dời sau)
@@ -76,6 +82,8 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi máy chủ!' });
   }
 });
+
+
 
 // ==========================================
 // KHỞI ĐỘNG MÁY CHỦ

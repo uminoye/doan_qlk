@@ -21,4 +21,13 @@ const getProducts = async () => {
   return await productModel.getAllProducts();
 };
 
-module.exports = { addProduct, getProducts };
+const editProduct = async (id, data) => {
+  const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url } = data;
+  return await productModel.updateProduct(id, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url);
+};
+
+const removeProduct = async (id) => {
+  await productModel.deleteProduct(id);
+};
+
+module.exports = { addProduct, getProducts, editProduct, removeProduct };
