@@ -35,6 +35,16 @@ app.use('/api/outbound', outboundRoutes);
 const factoryRoutes = require('./src/routes/factoryRoutes');
 app.use('/api/factory', factoryRoutes);
 
+// Khai báo đường dẫn cho Phòng Sales và Khách Hàng
+const customerRoutes = require('./src/routes/customerRoutes');
+app.use('/api/customers', customerRoutes);
+
+const salesRoutes = require('./src/routes/salesRoutes');
+app.use('/api/sales', salesRoutes);
+
+const authRoutes = require('./src/routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
 // ==========================================
 // API FIX MẬT KHẨU (Tạm thời để ở đây, mốt rảnh dời sau)
 // ==========================================

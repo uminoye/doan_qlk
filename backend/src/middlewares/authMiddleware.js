@@ -1,16 +1,27 @@
-const verifyManager = (req, res, next) => {
-  // Đọc thông tin cấp bậc gửi kèm trong Headers
-  const userLevel = req.headers['user-level'];
-  
-  if (userLevel !== 'MANAGER' && userLevel !== 'ADMIN') {
-    return res.status(403).json({ 
-      success: false, 
-      message: '🚫 Cảnh báo: Chỉ Quản Lý (Manager) hoặc Admin mới có quyền duyệt lệnh này!' 
-    });
+const jwt = require('jsonwebtoken');
+const { SECRET_KEY } = require('../services/authService');
+
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]; // Lấy token từ header
+  if (!token) return res.status(403).json({ message: "❌ Thiếu thẻ bài (Token)!" });
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded; // Lưu thông tin người dùng vào request
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "❌ Thẻ bài không hợp lệ hoặc đã hết hạn!" });
   }
-  
-  // Nếu đúng là Manager, bác bảo vệ mở cổng cho đi tiếp (chạy vào Controller)
-  next(); 
 };
 
-module.exports = { verifyManager };
+const verifyManager = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user.role === 'MANAGER' || req.user.role === 'ADMIN') {
+      next();
+    } else {
+      res.status(403).json({ message: "❌ Cút! Chức vụ thấp quá không được duyệt đơn!" });
+    }
+  });
+};
+
+module.exports = { verifyToken, verifyManager };
