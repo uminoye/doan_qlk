@@ -14,15 +14,13 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
+
         {/* Bọc Layout ra bên ngoài các trang dùng chung */}
-        <Route path="/" element={ <PrivateRoute><Layout /></PrivateRoute> }>
-          {/* Dashboard giờ là trang con nằm trong Layout */}
+        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Dashboard />} />
-          <Route path="warehouse" element={<Warehouse />} />
-          {/* Sau này em tạo trang Sales, Kho... thì chỉ cần viết thêm Route con ở đây */}
+          <Route path="/warehouse" element={<Warehouse />} /> {/* THÊM DÒNG NÀY */}
         </Route>
-        
+
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
