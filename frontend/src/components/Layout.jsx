@@ -1,15 +1,18 @@
-import { useNavigate, Outlet, Link } from 'react-router-dom';
+import { useNavigate, Outlet, Link, Navigate } from 'react-router-dom'; // Bổ sung công cụ Navigate ở đây
 import { LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, LogOut, UserCircle } from 'lucide-react';
 
 function Layout() {
   const navigate = useNavigate();
 
   // Lấy thông tin user từ bộ nhớ trình duyệt
-  // Lấy dữ liệu dạng chuỗi từ localStorage ra trước
   const userString = localStorage.getItem('user');
-
-  // Chỉ dùng JSON.parse nếu dữ liệu thực sự tồn tại và KHÔNG PHẢI là chữ "undefined"
   const user = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
+
+  // LỚP BẢO VỆ THÉP: Nếu có token mà mất user, tự động đá văng ra trang Login!
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -40,7 +43,7 @@ function Layout() {
       {/* THANH SIDEBAR BÊN TRÁI */}
       <div style={{ width: '260px', backgroundColor: '#001529', color: 'white', display: 'flex', flexDirection: 'column' }}>
 
-        {/* Khu vực Avatar & Level (Giao diện giống game em thích) */}
+        {/* Khu vực Avatar & Level */}
         <div style={{ padding: '20px', borderBottom: '1px solid #002c54', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <UserCircle size={45} color="#176b52" />
           <div>
