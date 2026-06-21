@@ -4,7 +4,7 @@ const authModel = require('../models/authModel');
 
 // Con dấu xịn của công ty để đóng mộc lên Thẻ từ (JWT)
 // Thực tế người ta giấu cái này đi, nhưng mình đang test nên để đây cho dễ
-const SECRET_KEY = 'DoAn_WMS_Secret_2026'; 
+const SECRET_KEY = 'DoAn_WMS_Secret_2026';
 
 const registerUser = async (username, password, fullName, role) => {
   const existingUser = await authModel.getUserByUsername(username);
@@ -12,7 +12,7 @@ const registerUser = async (username, password, fullName, role) => {
 
   // Băm mật khẩu ra 10 mảnh
   const passwordHash = await bcrypt.hash(password, 10);
-  
+
   // Tự sinh mã Nhân viên y như em làm với khách hàng
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   const employeeCode = `NV-${randomNum}`;
@@ -32,12 +32,18 @@ const loginUser = async (username, password) => {
   const token = jwt.sign(
     { id: user.id, role: user.role, name: user.full_name },
     SECRET_KEY,
-    { expiresIn: '8h' } 
+    { expiresIn: '8h' }
   );
-  
-  return { 
-    token, 
-    userInfo: { id: user.id, name: user.full_name, role: user.role } 
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      full_name: user.full_name, // Gửi đúng chữ full_name để Sidebar in ra
+      role: user.role,
+      level: user.level          // Gửi thêm level để Sidebar tự đổi màu
+    }
   };
 };
 
