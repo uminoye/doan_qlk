@@ -3,10 +3,13 @@ import { LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, LogOu
 
 function Layout() {
   const navigate = useNavigate();
-  
-  // Lấy thông tin user từ bộ nhớ trình duyệt
-  const user = JSON.parse(localStorage.getItem('user')) || {};
 
+  // Lấy thông tin user từ bộ nhớ trình duyệt
+  // Lấy dữ liệu dạng chuỗi từ localStorage ra trước
+  const userString = localStorage.getItem('user');
+
+  // Chỉ dùng JSON.parse nếu dữ liệu thực sự tồn tại và KHÔNG PHẢI là chữ "undefined"
+  const user = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -33,21 +36,21 @@ function Layout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f0f2f5', fontFamily: 'Arial' }}>
-      
+
       {/* THANH SIDEBAR BÊN TRÁI */}
       <div style={{ width: '260px', backgroundColor: '#001529', color: 'white', display: 'flex', flexDirection: 'column' }}>
-        
+
         {/* Khu vực Avatar & Level (Giao diện giống game em thích) */}
         <div style={{ padding: '20px', borderBottom: '1px solid #002c54', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <UserCircle size={45} color="#176b52" />
           <div>
             <h4 style={{ margin: 0, fontSize: '16px', color: '#fff' }}>{user.full_name}</h4>
-            <div style={{ 
-              backgroundColor: levelColor, 
-              color: 'white', 
-              fontSize: '11px', 
-              padding: '2px 8px', 
-              borderRadius: '10px', 
+            <div style={{
+              backgroundColor: levelColor,
+              color: 'white',
+              fontSize: '11px',
+              padding: '2px 8px',
+              borderRadius: '10px',
               display: 'inline-block',
               marginTop: '5px',
               fontWeight: 'bold'
@@ -78,9 +81,9 @@ function Layout() {
 
       {/* KHU VỰC NỘI DUNG CHÍNH (Đổi theo từng trang) */}
       <div style={{ flex: 1, padding: '20px' }}>
-        <Outlet /> 
+        <Outlet />
       </div>
-      
+
     </div>
   );
 }
