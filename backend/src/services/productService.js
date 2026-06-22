@@ -1,67 +1,69 @@
-const productModel = require('../models/productModel');
 const db = require('../models/db');
 
-const addProduct = async (data) => {
-  const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, inventory, warehouse_id } = data;
-
-  // Xử lý tạo mã SKU
-  let skuPrefix = `${category_code}-${brand_code}`;
-  if (size_or_capacity) skuPrefix += `-${size_or_capacity}`;
-
-  const currentCount = await productModel.countProductsByPrefix(skuPrefix);
-  const sequenceString = (currentCount + 1).toString().padStart(3, '0');
-  const finalSKU = `${skuPrefix}-${sequenceString}`;
-
-  // Gọi Thủ Kho để lưu
-  const newProduct = await productModel.createProduct(
-    finalSKU, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url
-  );
-
-  // Cập nhật tồn kho ban đầu
-  if (inventory !== undefined && inventory > 0) {
-    await productModel.updateInventory(newProduct.id, warehouse_id || 1, inventory);
-  }
-
-  return newProduct;
-};
-
+// 1. Hàm lấy danh sách toàn bộ sản phẩm
 const getProducts = async () => {
-  return await productModel.getAllProducts();
-};
-
-const editProduct = async (id, data) => {
-  const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, inventory, warehouse_id } = data;
-
-  // Cập nhật thông tin sản phẩm
-  const updatedProduct = await productModel.updateProduct(id, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url);
-
-  // Cập nhật tồn kho nếu có
-  if (inventory !== undefined) {
-    await productModel.updateInventory(id, warehouse_id || 1, inventory);
+  try {
+    const result = await db.query('SELECT * FROM products ORDER BY id DESC');
+    return result.rows;
+  } catch (error) {
+    throw error;
   }
-
-  return updatedProduct;
 };
 
+// 2. Hàm thêm sản phẩm mới
+const addProduct = async (productData) => {
+  try {
+    const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku } = productData;
+    const result = await db.query(
+      `INSERT INTO products (name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku]
+    );
+    return result.rows[0];
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 3. Hàm chỉnh sửa thông tin sản phẩm
+const editProduct = async (id, productData) => {
+  try {
+    const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku } = productData;
+    const result = await db.query(
+      `UPDATE products 
+       SET name = $1, category_code = $2, brand_code = $3, size_or_capacity = $4, 
+           type_detail = $5, unit = $6, sale_price = $7, image_url = $8, sku = $9
+       WHERE id = $10 RETURNING *`,
+      [name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku, id]
+    );
+    return result.rows[0];
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 4. Hàm xóa sản phẩm - Tích hợp dọn dẹp càn quét các bảng khóa ngoại liên quan
 const removeProduct = async (id) => {
   try {
-    // 1. Dọn dẹp bảng Tồn kho (Dùng try-catch để lỡ thiếu bảng web cũng không bị sập)
+    // BƯỚC 1 CỰC KỲ QUAN TRỌNG: 
+    // Vì Database không cho phép NULL, ta XÓA LUÔN dòng dữ liệu của sản phẩm này trong bảng locations
+    try { 
+        await db.query('DELETE FROM locations WHERE product_id = $1', [id]); 
+    } catch (err) {
+        console.error("Lỗi khi dọn dẹp bảng locations:", err.message);
+    }
+
+    // BƯỚC 2: Tự động quét dọn lịch sử ở các bảng trung gian (In ra lỗi nếu có để dễ debug)
     try { await db.query('DELETE FROM inventory WHERE product_id = $1', [id]); } catch (e) {}
-
-    // 2. Dọn dẹp chi tiết phiếu nhập
     try { await db.query('DELETE FROM inbound_details WHERE product_id = $1', [id]); } catch (e) {}
-
-    // 3. Dọn dẹp chi tiết phiếu xuất
     try { await db.query('DELETE FROM outbound_details WHERE product_id = $1', [id]); } catch (e) {}
-
-    // 4. Dọn dẹp chi tiết đơn hàng
     try { await db.query('DELETE FROM sales_order_details WHERE product_id = $1', [id]); } catch (e) {}
 
-    // 5. Sau khi cắt đứt mọi liên kết, tiến hành xóa sản phẩm
+    // BƯỚC 3: Tiến hành xóa sản phẩm gốc sau khi đã gỡ sạch 100% khóa ngoại
     const result = await db.query('DELETE FROM products WHERE id = $1', [id]);
     
     if (result.rowCount === 0) {
-      throw new Error('Không tìm thấy sản phẩm trong Database!');
+      throw new Error('Không tìm thấy sản phẩm cần xóa trong hệ thống.');
     }
     return true;
   } catch (error) {
@@ -69,4 +71,9 @@ const removeProduct = async (id) => {
   }
 };
 
-module.exports = { addProduct, getProducts, editProduct, removeProduct };
+module.exports = {
+  getProducts,
+  addProduct,
+  editProduct,
+  removeProduct
+};

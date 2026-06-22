@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 
+// 👉 CHỈ CẦN SỬA ĐÚNG 1 DÒNG NÀY KHI MUỐN ĐỔI LINK SERVER
+// Khi test ở máy: dùng 'http://localhost:5000/api'
+// Khi nộp báo cáo: dùng 'https://doan-qlk.onrender.com/api'
+const API_BASE = 'http://localhost:5000/api'; 
+
 // Configuration for category, brand linkage and dynamic units
 const categoryConfig = {
     TV: {
@@ -86,7 +91,7 @@ function Products() {
 
     const fetchProducts = async () => {
         try {
-            const response = await fetch('https://doan-qlk.onrender.com/api/products');
+            const response = await fetch(`${API_BASE}/products`);
             const data = await response.json();
             if (data.success) setProducts(data.products);
         } catch (error) {
@@ -159,7 +164,7 @@ function Products() {
         if (window.confirm(`Xác nhận xóa sản phẩm: "${name}" vĩnh viễn khỏi danh mục?`)) {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`https://doan-qlk.onrender.com/api/products/${id}`, {
+                const response = await fetch(`${API_BASE}/products/${id}`, {
                     method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await response.json();
@@ -174,7 +179,7 @@ function Products() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const url = editingId ? `https://doan-qlk.onrender.com/api/products/${editingId}` : 'https://doan-qlk.onrender.com/api/products';
+            const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
             const method = editingId ? 'PUT' : 'POST';
 
             const response = await fetch(url, {

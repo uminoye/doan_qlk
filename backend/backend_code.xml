@@ -31,12 +31,12 @@ module.exports = { register, login };
 </file>
 <file name="customerController.js">
 const customerService = require('../services/customerService');
+const customerModel = require('../models/customerModel');
 
 const registerCustomer = async (req, res) => {
   try {
     const { name, phone, address } = req.body;
     const newCustomer = await customerService.createCustomer(name, phone, address);
-    
     res.json({ 
       success: true, 
       message: `Táº¡o khÃ¡ch hÃ ng thÃ nh cÃ´ng! MÃ£ tá»± sinh: ${newCustomer.customer_code}` 
@@ -46,7 +46,16 @@ const registerCustomer = async (req, res) => {
   }
 };
 
-module.exports = { registerCustomer };
+const getCustomers = async (req, res) => {
+  try {
+    const customers = await customerModel.getAllCustomers();
+    res.json({ success: true, data: customers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { registerCustomer, getCustomers };
 </file>
 <file name="factoryController.js">
 const factoryService = require('../services/factoryService');
@@ -369,30 +378,77 @@ const updateProduct = async (req, res) => {
   }
 };
 
-const deleteProduct = async (req, res) => {
-  try {
+const deleteProduct = (req, res) => {
     const { id } = req.params;
-    await productService.removeProduct(id);
-    res.json({ success: true, message: 'ÄÃ£ xÃ³a sáº£n pháº©m khá»i kho!' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Lá»—i khi xÃ³a! CÃ³ thá»ƒ sáº£n pháº©m nÃ y Ä‘ang cÃ³ tá»“n kho.' });
-  }
+
+    // 1. Kiá»ƒm tra tá»“n kho trÆ°á»›c
+    const checkQuery = `
+        SELECT COALESCE(SUM(on_hand_qty), 0) AS total_stock
+        FROM inventory_balances
+        WHERE product_id = ?
+    `;
+
+    db.get(checkQuery, [id], (err, row) => {
+        if (err) {
+            return res.status(500).json({ message: 'Lá»—i khi kiá»ƒm tra tá»“n kho cá»§a sáº£n pháº©m', error: err.message });
+        }
+
+        const totalStock = Number(row?.total_stock || 0);
+        if (totalStock > 0) {
+            return res.status(400).json({
+                message: 'KhÃ´ng thá»ƒ xÃ³a sáº£n pháº©m vÃ¬ váº«n cÃ²n tá»“n kho. HÃ£y xuáº¥t háº¿t hÃ ng trÆ°á»›c khi xÃ³a.',
+            });
+        }
+
+        // 2. Náº¿u tá»“n = 0, tiáº¿n hÃ nh dá»n rÃ¡c cÃ¡c khÃ³a ngoáº¡i (Cascade Delete thá»§ cÃ´ng)
+        db.serialize(() => {
+            db.run("BEGIN TRANSACTION");
+
+            // XÃ³a á»Ÿ báº£ng Tá»“n kho (DÃ¹ tá»“n báº±ng 0 váº«n pháº£i xÃ³a dÃ²ng lÆ°u trá»¯)
+            db.run(`DELETE FROM inventory_balances WHERE product_id = ?`, [id]);
+            
+            // XÃ³a á»Ÿ lá»‹ch sá»­ giao dá»‹ch kho
+            db.run(`DELETE FROM inventory_transactions WHERE product_id = ?`, [id]);
+
+            // XÃ³a á»Ÿ chi tiáº¿t phiáº¿u nháº­p
+            db.run(`DELETE FROM production_receipt_items WHERE product_id = ?`, [id]);
+
+            // XÃ³a á»Ÿ chi tiáº¿t Ä‘Æ¡n hÃ ng bÃ¡n
+            db.run(`DELETE FROM sales_order_items WHERE product_id = ?`, [id]);
+
+            // XÃ³a á»Ÿ chi tiáº¿t phiáº¿u xuáº¥t
+            db.run(`DELETE FROM stock_outbound_note_items WHERE product_id = ?`, [id]);
+
+            // Cuá»‘i cÃ¹ng: Nhá»• cá» táº­n gá»‘c (XÃ³a sáº£n pháº©m)
+            db.run(`DELETE FROM products WHERE id = ?`, [id], function(deleteErr) {
+                if (deleteErr) {
+                    db.run("ROLLBACK"); // Náº¿u cÃ³ lá»—i á»Ÿ bÆ°á»›c nÃ o thÃ¬ hoÃ n tÃ¡c toÃ n bá»™
+                    return res.status(500).json({ message: 'Lá»—i khi xÃ³a sáº£n pháº©m', error: deleteErr.message });
+                }
+
+                if (this.changes === 0) {
+                    db.run("ROLLBACK");
+                    return res.status(404).json({ message: 'KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m cáº§n xÃ³a' });
+                }
+
+                db.run("COMMIT"); // XÃ¡c nháº­n xÃ³a thÃ nh cÃ´ng
+                return res.status(200).json({ message: 'ÄÃ£ xÃ³a sáº£n pháº©m vÃ  lÃ m sáº¡ch lá»‹ch sá»­ liÃªn quan!' });
+            });
+        });
+    });
 };
 
 module.exports = { createProduct, getAllProducts, updateProduct, deleteProduct };
 </file>
 <file name="salesController.js">
 const salesService = require('../services/salesService');
+const salesModel = require('../models/salesModel');
 
 const createSalesOrder = async (req, res) => {
   try {
     const { customer_id, sale_person_id, items } = req.body;
     const result = await salesService.placeOrder(customer_id, sale_person_id, items);
-    
-    res.json({ 
-      success: true, 
-      message: `Táº¡o Ä‘Æ¡n thÃ nh cÃ´ng! MÃ£ Ä‘Æ¡n: ${result.orderCode}. Tá»•ng tiá»n: ${result.totalAmount.toLocaleString('vi-VN')} VNÄ. Chá» sáº¿p duyá»‡t!` 
-    });
+    res.json({ success: true, message: `Táº¡o Ä‘Æ¡n thÃ nh cÃ´ng! MÃ£ Ä‘Æ¡n: ${result.orderCode}.`, orderCode: result.orderCode, totalAmount: result.totalAmount });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -401,16 +457,37 @@ const createSalesOrder = async (req, res) => {
 const approveSalesOrder = async (req, res) => {
   try {
     const { id } = req.params; 
-    const { manager_id } = req.body;
+    const userId = req.user?.id || req.body.manager_id;
     
-    await salesService.authorizeOrder(id, manager_id);
-    res.json({ success: true, message: `âœ… Sáº¿p Ä‘Ã£ duyá»‡t Ä‘Æ¡n! Gá»­i yÃªu cáº§u qua kho Ä‘á»ƒ xuáº¥t hÃ ng ngay!` });
+    await salesService.authorizeOrder(id, userId);
+    res.json({ success: true, message: `âœ… ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c duyá»‡t thÃ nh cÃ´ng!` });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-module.exports = { createSalesOrder, approveSalesOrder };
+const getSalesOrders = async (req, res) => {
+  try {
+    const orders = await salesModel.getAllOrders();
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getSalesOrderById = async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    const order = await salesModel.getOrderById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: 'KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng' });
+    const details = await salesModel.getOrderDetails(orderId);
+    res.json({ success: true, data: { ...order, items: details } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { createSalesOrder, approveSalesOrder, getSalesOrders, getSalesOrderById };
 </file>
 <file name="authMiddleware.js">
 const jwt = require('jsonwebtoken');
@@ -491,7 +568,12 @@ const addCustomer = async (customerCode, name, phone, address) => {
   return result.rows[0];
 };
 
-module.exports = { addCustomer };
+const getAllCustomers = async () => {
+  const result = await db.query('SELECT * FROM customers ORDER BY id DESC');
+  return result.rows;
+};
+
+module.exports = { addCustomer, getAllCustomers };
 </file>
 <file name="db.js">
 const { Pool } = require('pg');
@@ -897,7 +979,7 @@ const executeOutbound = async (userId, receiptCode, productDetails) => {
     for (let bin of item.bins) {
       // Dá»n sáº¡ch Bin: Äá»•i thÃ nh EMPTY, xÃ³a tÃªn sáº£n pháº©m, Ä‘Æ°a sá»‘ lÆ°á»£ng vá» 0
       await db.query(
-        `UPDATE locations SET status = 'EMPTY', product_id = NULL, current_qty = 0 WHERE id = $1`,
+        `UPDATE locations SET status = 'EMPTY', product_id = NULL, current_qty = 0, updated_at = NOW() WHERE id = $1`,
         [bin.id]
       );
       
@@ -907,6 +989,14 @@ const executeOutbound = async (userId, receiptCode, productDetails) => {
         [receiptId, item.productId, bin.id]
       );
     }
+    
+    // ÄIá»‚M CHá»T QUAN TRá»ŒNG: Trá»« tá»•ng tá»“n kho trong báº£ng inventory
+    await db.query(
+      `UPDATE inventory 
+       SET quantity = quantity - $1, updated_at = NOW() 
+       WHERE product_id = $2 AND warehouse_id = 1`,
+      [item.quantity, item.productId]
+    );
   }
   return receiptId;
 };
@@ -969,7 +1059,27 @@ const updateInventory = async (product_id, warehouse_id, quantity) => {
 
 // XÃ³a sáº£n pháº©m
 const deleteProduct = async (id) => {
-  await db.query('DELETE FROM products WHERE id = $1', [id]);
+  try {
+    // 1. Dá»n dáº¹p báº£ng Tá»“n kho (inventory)
+    try { await db.query('DELETE FROM inventory WHERE product_id = $1', [id]); } catch (e) { console.log('Bá» qua inventory'); }
+
+    // 2. Dá»n dáº¹p chi tiáº¿t phiáº¿u nháº­p (inbound_details)
+    try { await db.query('DELETE FROM inbound_details WHERE product_id = $1', [id]); } catch (e) { console.log('Bá» qua inbound'); }
+
+    // 3. Dá»n dáº¹p chi tiáº¿t phiáº¿u xuáº¥t (outbound_details)
+    try { await db.query('DELETE FROM outbound_details WHERE product_id = $1', [id]); } catch (e) { console.log('Bá» qua outbound'); }
+
+    // 4. Dá»n dáº¹p chi tiáº¿t Ä‘Æ¡n hÃ ng kinh doanh (sales_order_details)
+    try { await db.query('DELETE FROM sales_order_details WHERE product_id = $1', [id]); } catch (e) { console.log('Bá» qua sales'); }
+
+    // 5. Cuá»‘i cÃ¹ng, khi rá»… Ä‘Ã£ Ä‘á»©t háº¿t, tiáº¿n hÃ nh nhá»• cÃ¢y (XÃ³a sáº£n pháº©m)
+    const result = await db.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
+    
+    // Náº¿u rowCount > 0 tá»©c lÃ  Ä‘Ã£ xÃ³a thÃ nh cÃ´ng
+    return result.rowCount > 0;
+  } catch (error) {
+    throw new Error('Lá»—i Database khi dá»n dáº¹p sáº£n pháº©m: ' + error.message);
+  }
 };
 
 module.exports = { countProductsByPrefix, createProduct, getAllProducts, updateProduct, updateInventory, deleteProduct };
@@ -977,10 +1087,11 @@ module.exports = { countProductsByPrefix, createProduct, getAllProducts, updateP
 <file name="salesModel.js">
 const db = require('./db');
 
+// Láº­p lá»‡nh giao dá»‹ch má»›i
 const createOrder = async (customerId, salePersonId, orderCode, totalAmount, items) => {
   const orderRes = await db.query(
-    `INSERT INTO sales_orders (order_code, customer_id, sale_person_id, total_amount) 
-     VALUES ($1, $2, $3, $4) RETURNING id`,
+    `INSERT INTO sales_orders (order_code, customer_id, sale_person_id, total_amount, status, created_at) 
+     VALUES ($1, $2, $3, $4, 'PENDING', NOW()) RETURNING id`,
     [orderCode, customerId, salePersonId, totalAmount]
   );
   const orderId = orderRes.rows[0].id;
@@ -989,23 +1100,59 @@ const createOrder = async (customerId, salePersonId, orderCode, totalAmount, ite
     await db.query(
       `INSERT INTO sales_order_details (order_id, product_id, quantity, unit_price) 
        VALUES ($1, $2, $3, $4)`,
-      [orderId, item.productId, item.quantity, item.unitPrice]
+       [orderId, item.productId, item.quantity, item.unitPrice]
     );
   }
   return orderId;
 };
 
+// Duyá»‡t Ä‘Æ¡n hÃ ng
 const approveOrder = async (orderId, managerId) => {
   const result = await db.query(
     `UPDATE sales_orders 
      SET status = 'APPROVED', approved_by = $1 
      WHERE id = $2 RETURNING *`,
-    [orderId, managerId]
+    [managerId, orderId]
   );
   return result.rows[0];
 };
 
-module.exports = { createOrder, approveOrder };
+// Láº¥y toÃ n bá»™ danh sÃ¡ch Ä‘Æ¡n hÃ ng (Bá»• sung má»›i)
+const getAllOrders = async () => {
+  const result = await db.query(`
+    SELECT so.*, u.full_name as sale_person_name, c.name as customer_name
+    FROM sales_orders so
+    LEFT JOIN users u ON so.sale_person_id = u.id
+    LEFT JOIN customers c ON so.customer_id = c.id
+    ORDER BY so.created_at DESC
+  `);
+  return result.rows;
+};
+
+// Láº¥y thÃ´ng tin 1 Ä‘Æ¡n hÃ ng theo ID (Bá»• sung má»›i)
+const getOrderById = async (id) => {
+  const result = await db.query(`
+    SELECT so.*, u.full_name as sale_person_name, c.name as customer_name
+    FROM sales_orders so
+    LEFT JOIN users u ON so.sale_person_id = u.id
+    LEFT JOIN customers c ON so.customer_id = c.id
+    WHERE so.id = $1
+  `, [id]);
+  return result.rows[0];
+};
+
+// Láº¥y danh sÃ¡ch sáº£n pháº©m bÃªn trong Ä‘Æ¡n hÃ ng Ä‘Ã³ (Bá»• sung má»›i)
+const getOrderDetails = async (orderId) => {
+  const result = await db.query(`
+    SELECT sod.*, p.sku, p.name as product_name, p.category_code
+    FROM sales_order_details sod
+    JOIN products p ON sod.product_id = p.id
+    WHERE sod.order_id = $1
+  `, [orderId]);
+  return result.rows;
+};
+
+module.exports = { createOrder, approveOrder, getAllOrders, getOrderById, getOrderDetails };
 </file>
 <file name="authRoutes.js">
 const express = require('express');
@@ -1021,8 +1168,10 @@ module.exports = router;
 const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customerController');
+const { verifyToken } = require('../middlewares/authMiddleware');
 
-router.post('/create', customerController.registerCustomer);
+router.post('/create', verifyToken, customerController.registerCustomer);
+router.get('/', verifyToken, customerController.getCustomers);
 
 module.exports = router;
 </file>
@@ -1161,10 +1310,11 @@ module.exports = router;
 const express = require('express');
 const router = express.Router();
 const salesController = require('../controllers/salesController');
-// Nháº­p kháº©u camera an ninh vÃ o Ä‘Ã¢y
-const { verifyManager } = require('../middlewares/authMiddleware');
+const { verifyToken, verifyManager } = require('../middlewares/authMiddleware');
 
-// Chá»‰ cÃ³ ai cÃ³ tháº» bÃ i há»£p lá»‡ vÃ  cÃ³ chá»©c danh MANAGER/ADMIN má»›i Ä‘Æ°á»£c duyá»‡t Ä‘Æ¡n
+router.post('/', verifyToken, salesController.createSalesOrder);
+router.get('/', verifyToken, salesController.getSalesOrders);
+router.get('/:id', verifyToken, salesController.getSalesOrderById);
 router.put('/approve/:id', verifyManager, salesController.approveSalesOrder);
 
 module.exports = router;
@@ -1725,19 +1875,29 @@ const editProduct = async (id, data) => {
 };
 
 const removeProduct = async (id) => {
-  // 1. Kiá»ƒm tra tá»“n kho trÆ°á»›c khi xÃ³a
-  const result = await db.query('SELECT quantity FROM inventory WHERE product_id = $1', [id]);
-  const totalStock = result.rows.reduce((sum, row) => sum + row.quantity, 0);
+  try {
+    // 1. Dá»n dáº¹p báº£ng Tá»“n kho (DÃ¹ng try-catch Ä‘á»ƒ lá»¡ thiáº¿u báº£ng web cÅ©ng khÃ´ng bá»‹ sáº­p)
+    try { await db.query('DELETE FROM inventory WHERE product_id = $1', [id]); } catch (e) {}
 
-  if (totalStock > 0) {
-    throw new Error('KhÃ´ng thá»ƒ xÃ³a: Sáº£n pháº©m váº«n cÃ²n tá»“n kho trong Ã­t nháº¥t má»™t kho!');
+    // 2. Dá»n dáº¹p chi tiáº¿t phiáº¿u nháº­p
+    try { await db.query('DELETE FROM inbound_details WHERE product_id = $1', [id]); } catch (e) {}
+
+    // 3. Dá»n dáº¹p chi tiáº¿t phiáº¿u xuáº¥t
+    try { await db.query('DELETE FROM outbound_details WHERE product_id = $1', [id]); } catch (e) {}
+
+    // 4. Dá»n dáº¹p chi tiáº¿t Ä‘Æ¡n hÃ ng
+    try { await db.query('DELETE FROM sales_order_details WHERE product_id = $1', [id]); } catch (e) {}
+
+    // 5. Sau khi cáº¯t Ä‘á»©t má»i liÃªn káº¿t, tiáº¿n hÃ nh xÃ³a sáº£n pháº©m
+    const result = await db.query('DELETE FROM products WHERE id = $1', [id]);
+    
+    if (result.rowCount === 0) {
+      throw new Error('KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m trong Database!');
+    }
+    return true;
+  } catch (error) {
+    throw error;
   }
-
-  // 2. Náº¿u tá»“n kho = 0, thÃ¬ xÃ³a dá»¯ liá»‡u liÃªn quan á»Ÿ báº£ng inventory trÆ°á»›c
-  await db.query('DELETE FROM inventory WHERE product_id = $1', [id]);
-
-  // 3. XÃ³a sáº£n pháº©m
-  await productModel.deleteProduct(id);
 };
 
 module.exports = { addProduct, getProducts, editProduct, removeProduct };

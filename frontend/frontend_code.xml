@@ -1,15 +1,20 @@
 ﻿<file name="Layout.jsx">
-import { useNavigate, Outlet, Link, Navigate } from 'react-router-dom'; // Bá»• sung cÃ´ng cá»¥ Navigate á»Ÿ Ä‘Ã¢y
-import { LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, LogOut, UserCircle, Tag, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate, Outlet, Link, Navigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, 
+  LogOut, UserCircle, Tag, ArrowDownToLine, ArrowUpFromLine, 
+  Menu, ChevronLeft 
+} from 'lucide-react';
 
 function Layout() {
   const navigate = useNavigate();
+  // State Ä‘iá»u khiá»ƒn viá»‡c gáº­p/má»Ÿ sidebar
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Láº¥y thÃ´ng tin user tá»« bá»™ nhá»› trÃ¬nh duyá»‡t
   const userString = localStorage.getItem('user');
   const user = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
 
-  // Lá»šP Báº¢O Vá»† THÃ‰P: Náº¿u cÃ³ token mÃ  máº¥t user, tá»± Ä‘á»™ng Ä‘Ã¡ vÄƒng ra trang Login!
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -20,15 +25,14 @@ function Layout() {
     navigate('/login');
   };
 
-  // Cáº¥u hÃ¬nh mÃ u sáº¯c cho thanh Level
   const isManager = user.level === 'MANAGER';
-  const levelColor = isManager ? '#ff4d4f' : '#52c41a'; // Äá» quyá»n lá»±c cho Manager, Xanh lÃ¡ cho Staff
+  const levelColor = isManager ? '#ef4444' : '#10b981'; 
   const levelText = isManager ? 'TRÆ¯á»žNG PHÃ’NG' : 'NHÃ‚N VIÃŠN';
 
-  // Danh sÃ¡ch Menu thÃ´ng minh (Chá»‰ hiá»‡n khi user cÃ³ role phÃ¹ há»£p)
   const menuItems = [
     { path: '/', name: 'Tá»•ng quan', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'SALES', 'KHO', 'LOGISTICS', 'NHAMAY'] },
     { path: '/products', name: 'Sáº£n pháº©m', icon: <Tag size={20} />, roles: ['ADMIN', 'KHO', 'SALES'] },
+    { path: '/customers', name: 'KhÃ¡ch hÃ ng', icon: <UserCircle size={20} />, roles: ['ADMIN', 'SALES'] }, // THÃŠM DÃ’NG NÃ€Y VÃ€O ÄÃ‚Y
     { path: '/inbound', name: 'Nháº­p kho', icon: <ArrowDownToLine size={20} />, roles: ['ADMIN', 'KHO'] },
     { path: '/outbound', name: 'Xuáº¥t kho', icon: <ArrowUpFromLine size={20} />, roles: ['ADMIN', 'KHO'] },
     { path: '/sales', name: 'Kinh doanh', icon: <ShoppingCart size={20} />, roles: ['ADMIN', 'SALES'] },
@@ -38,56 +42,105 @@ function Layout() {
     { path: '/settings', name: 'Há»‡ thá»‘ng', icon: <Settings size={20} />, roles: ['ADMIN'] },
   ];
 
-  // Lá»c ra nhá»¯ng menu mÃ  user hiá»‡n táº¡i Ä‘Æ°á»£c phÃ©p xem
   const allowedMenus = menuItems.filter(item => item.roles.includes(user.role));
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f0f2f5', fontFamily: 'Arial' }}>
+    <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
 
-      {/* THANH SIDEBAR BÃŠN TRÃI */}
-      <div style={{ width: '260px', backgroundColor: '#001529', color: 'white', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Khu vá»±c Avatar & Level */}
-        <div style={{ padding: '20px', borderBottom: '1px solid #002c54', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <UserCircle size={45} color="#176b52" />
-          <div>
-            <h4 style={{ margin: 0, fontSize: '16px', color: '#fff' }}>{user.full_name}</h4>
-            <div style={{
-              backgroundColor: levelColor,
-              color: 'white',
-              fontSize: '11px',
-              padding: '2px 8px',
-              borderRadius: '10px',
-              display: 'inline-block',
-              marginTop: '5px',
-              fontWeight: 'bold'
-            }}>
-              {levelText} ({user.role})
+      {/* THANH SIDEBAR: Thay Ä‘á»•i width dá»±a vÃ o isCollapsed, cÃ³ transition Ä‘á»ƒ trÆ°á»£t mÆ°á»£t mÃ  */}
+      <div style={{ 
+        width: isCollapsed ? '80px' : '260px', 
+        minWidth: isCollapsed ? '80px' : '260px', 
+        backgroundColor: '#001529', color: 'white', 
+        display: 'flex', flexDirection: 'column', height: '100%', 
+        boxShadow: '2px 0 8px rgba(0,0,0,0.1)', zIndex: 10,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+      }}>
+        
+        {/* Khu vá»±c Avatar & NÃºt Gáº­p/Má»Ÿ */}
+        <div style={{ 
+          padding: isCollapsed ? '24px 0' : '24px 20px', 
+          borderBottom: '1px solid #002c54', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: isCollapsed ? 'center' : 'space-between',
+          flexDirection: isCollapsed ? 'column' : 'row',
+          gap: '12px',
+          transition: 'all 0.3s ease'
+        }}>
+          
+          {!isCollapsed ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+              <UserCircle size={45} color="#10b981" style={{ flexShrink: 0 }} />
+              <div style={{ overflow: 'hidden' }}>
+                <h4 style={{ margin: 0, fontSize: '15px', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user.full_name}
+                </h4>
+                <div style={{ backgroundColor: levelColor, color: 'white', fontSize: '10px', padding: '3px 8px', borderRadius: '12px', display: 'inline-block', marginTop: '6px', fontWeight: 'bold' }}>
+                  {levelText}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <UserCircle size={35} color="#10b981" style={{ marginBottom: '10px' }} />
+          )}
+
+          {/* NÃºt báº¥m Thu/PhÃ³ng */}
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            style={{
+              background: isCollapsed ? 'transparent' : '#0f2744', 
+              border: 'none', color: '#94a3b8', cursor: 'pointer',
+              padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: '0.2s'
+            }}
+            title={isCollapsed ? "Má»Ÿ rá»™ng menu" : "Thu gá»n menu"}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+          >
+            {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={20} />}
+          </button>
         </div>
 
         {/* Danh sÃ¡ch Menu */}
-        <div style={{ flex: 1, padding: '15px 0' }}>
+        <div style={{ flex: 1, padding: '15px 0', overflowY: 'auto', overflowX: 'hidden' }}>
           {allowedMenus.map((item, index) => (
-            <Link key={index} to={item.path} style={{ display: 'flex', alignItems: 'center', padding: '12px 20px', color: '#a6adb4', textDecoration: 'none', gap: '10px', transition: '0.3s' }}>
-              {item.icon}
-              <span style={{ fontSize: '15px' }}>{item.name}</span>
+            <Link key={index} to={item.path} 
+                  title={isCollapsed ? item.name : ""} // ThÃªm title Ä‘á»ƒ khi gáº­p láº¡i rÃª chuá»™t vÃ o sáº½ hiá»‡n tÃªn
+                  style={{ 
+                    display: 'flex', alignItems: 'center', 
+                    padding: isCollapsed ? '14px 0' : '14px 24px', 
+                    justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    color: '#94a3b8', textDecoration: 'none', gap: '12px', 
+                    transition: 'all 0.2s', borderLeft: '3px solid transparent' 
+                  }} 
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = '#0f2744'; e.currentTarget.style.borderLeft = '3px solid #10b981'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderLeft = '3px solid transparent'; }}>
+              <div style={{ flexShrink: 0 }}>{item.icon}</div>
+              {!isCollapsed && <span style={{ fontSize: '15px', fontWeight: '500', whiteSpace: 'nowrap' }}>{item.name}</span>}
             </Link>
           ))}
         </div>
 
-        {/* NÃºt ÄÄƒng xuáº¥t á»Ÿ cuá»‘i cÃ¹ng */}
-        <div style={{ padding: '15px 20px', borderTop: '1px solid #002c54' }}>
-          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '15px', width: '100%' }}>
-            <LogOut size={20} />
-            <b>ÄÄƒng xuáº¥t</b>
+        {/* NÃºt ÄÄƒng xuáº¥t */}
+        <div style={{ padding: isCollapsed ? '20px 0' : '20px', borderTop: '1px solid #002c54', background: '#001122', display: 'flex', justifyContent: 'center' }}>
+          <button onClick={handleLogout} 
+                  title="ÄÄƒng xuáº¥t"
+                  style={{ 
+                    display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    gap: '10px', backgroundColor: 'transparent', border: 'none', color: '#ef4444', 
+                    cursor: 'pointer', fontSize: '15px', width: '100%', fontWeight: 'bold', transition: '0.2s' 
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#f87171'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#ef4444'}>
+            <LogOut size={20} style={{ flexShrink: 0 }} />
+            {!isCollapsed && <span style={{ whiteSpace: 'nowrap' }}>ÄÄƒng xuáº¥t</span>}
           </button>
         </div>
       </div>
 
-      {/* KHU Vá»°C Ná»˜I DUNG CHÃNH (Äá»•i theo tá»«ng trang) */}
-      <div style={{ flex: 1, padding: '20px' }}>
+      {/* KHU Vá»°C Ná»˜I DUNG CHÃNH */}
+      <div style={{ flex: 1, height: '100vh', overflowY: 'auto', position: 'relative', transition: 'all 0.3s ease' }}>
         <Outlet />
       </div>
 
@@ -97,82 +150,372 @@ function Layout() {
 
 export default Layout;
 </file>
+<file name="Customers.jsx">
+import { useState, useEffect } from 'react';
+import { UserPlus, Users, RefreshCw, MapPin, Phone, ShieldAlert } from 'lucide-react';
+
+const API_BASE = 'https://doan-qlk.onrender.com/api';
+
+function Customers() {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
+
+  const userString = localStorage.getItem('user');
+  const currentUser = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
+  const userRole = currentUser?.role || '';
+  const userLevel = currentUser?.level || '';
+
+  // Chá»‰ cho phÃ©p ADMIN hoáº·c TrÆ°á»Ÿng phÃ²ng kinh doanh (SALES + MANAGER) vÃ o má»¥c nÃ y
+  const isAuthorized = userRole === 'ADMIN' || (userRole === 'SALES' && userLevel === 'MANAGER');
+
+  const getAuthHeaders = () => {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    };
+  };
+
+  const fetchCustomers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/customers`, { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (data.success) setCustomers(data.data);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => {
+    if (isAuthorized) fetchCustomers();
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/customers/create`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        setFormData({ name: '', phone: '', address: '' });
+        fetchCustomers();
+      } else alert(data.message);
+    } catch (error) { alert('Lá»—i há»‡ thá»‘ng!'); }
+    finally { setLoading(false); }
+  };
+
+  if (!isAuthorized) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial' }}>
+        <ShieldAlert size={50} color="#ef4444" style={{ margin: '0 auto 16px auto' }} />
+        <h3 style={{ color: '#1e293b' }}>Tá»« Chá»‘i Truy Cáº­p</h3>
+        <p style={{ color: '#64748b', marginTop: '6px' }}>Má»¥c quáº£n lÃ½ nÃ y chá»‰ dÃ nh riÃªng cho Admin vÃ  TrÆ°á»Ÿng phÃ²ng Sale há»‡ thá»‘ng.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '24px', fontFamily: 'Arial', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Users size={24} color="#10b981" /> Quáº£n lÃ½ Äá»‘i TÃ¡c KhÃ¡ch HÃ ng
+        </h2>
+        <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>ThÃªm má»›i vÃ  tra cá»©u thÃ´ng tin há»‡ thá»‘ng khÃ¡ch sá»‰ thiáº¿t bá»‹ Ä‘iá»‡n mÃ¡y</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+        {/* BÃªn TrÃ¡i: Form thÃªm khÃ¡ch hÃ ng */}
+        <div style={{ flex: 1, minWidth: '300px', background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', height: 'fit-content' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px', color: '#1e293b' }}>
+            <UserPlus size={18} color="#10b981" /> ÄÄƒng kÃ½ KhÃ¡ch hÃ ng Má»›i
+          </h3>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569' }}>TÃªn Ä‘á»‘i tÃ¡c / TÃªn Ä‘áº¡i lÃ½ *</label>
+              <input required name="name" value={formData.name} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} placeholder="VD: SiÃªu thá»‹ Äiá»‡n mÃ¡y Chá»£ Lá»›n" />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569' }}>Sá»‘ Ä‘iá»‡n thoáº¡i liÃªn há»‡ *</label>
+              <input required name="phone" value={formData.phone} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} placeholder="VD: 0912345678" />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569' }}>Äá»‹a chá»‰ cÃ´ng ty / Äáº¡i lÃ½ *</label>
+              <input required name="address" value={formData.address} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} placeholder="VD: Sá»‘ 12 ÄÆ°á»ng Tráº§n HÆ°ng Äáº¡o, DÄ© An, BÃ¬nh DÆ°Æ¡ng" />
+            </div>
+
+            <button type="submit" disabled={loading} style={{ width: '100%', padding: '12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}>
+              {loading ? 'Äang lÆ°u Ä‘á»‘i tÃ¡c...' : 'âœ“ LÆ°u KhÃ¡ch HÃ ng Khá»i Há»‡ Thá»‘ng'}
+            </button>
+          </form>
+        </div>
+
+        {/* BÃªn Pháº£i: Báº£ng danh sÃ¡ch khÃ¡ch hÃ ng */}
+        <div style={{ flex: 2, minWidth: '400px', background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#1e293b' }}>Danh sÃ¡ch khÃ¡ch sá»‰ ({customers.length})</h3>
+          
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ padding: '12px', textAlign: 'left', color: '#64748b', fontSize: '13px', borderBottom: '2px solid #e2e8f0' }}>MÃ£ KhÃ¡ch HÃ ng</th>
+                  <th style={{ padding: '12px', textAlign: 'left', color: '#64748b', fontSize: '13px', borderBottom: '2px solid #e2e8f0' }}>TÃªn Äá»‘i TÃ¡c</th>
+                  <th style={{ padding: '12px', textAlign: 'left', color: '#64748b', fontSize: '13px', borderBottom: '2px solid #e2e8f0' }}>LiÃªn Há»‡</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.length === 0 ? (
+                  <tr><td colSpan="3" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>ChÆ°a cÃ³ Ä‘á»‘i tÃ¡c nÃ o trÃªn há»‡ thá»‘ng</td></tr>
+                ) : customers.map(c => (
+                  <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '12px', fontWeight: 'bold', color: '#10b981' }}>{c.customer_code}</td>
+                    <td style={{ padding: '12px', color: '#1e293b', fontWeight: '500' }}>{c.name}</td>
+                    <td style={{ padding: '12px', fontSize: '13px', color: '#64748b' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={12}/>{c.phone}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}><MapPin size={12}/>{c.address}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {loading && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <RefreshCw size={40} color="#10b981" style={{ animation: 'spin 1s linear infinite' }} />
+        </div>
+      )}
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+export default Customers;
+</file>
 <file name="Dashboard.jsx">
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Package, Tags, ArrowDownToLine, Database, RefreshCw, Activity, CheckCircle2 } from 'lucide-react';
+
+const API_BASE = 'https://doan-qlk.onrender.com/api';
 
 function Dashboard() {
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalInventory: 0,
+    lowStock: 0,
+    capacity: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [setupMessage, setSetupMessage] = useState('');
+  const [setupLoading, setSetupLoading] = useState(false);
 
-  // HÃ m gá»i API xÃ¢y kho tá»± Ä‘á»™ng
-  const generateBins = async () => {
+  // Gá»i nhiá»u API cÃ¹ng lÃºc Ä‘á»ƒ láº¥y sá»‘ liá»‡u thá»‘ng kÃª
+  const fetchDashboardData = async () => {
     setLoading(true);
-    setMessage('â³ Äang nhá» thá»£ xÃ¢y dá»±ng 3000 vá»‹ trÃ­ ká»‡ kho, chá» xÃ­u nha...');
-    
     try {
-      const response = await fetch('https://doan-qlk.onrender.com/api/locations/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setMessage('âœ… ' + data.message);
-      } else {
-        setMessage('âŒ Lá»—i: ' + data.message);
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const [prodRes, invRes, overviewRes] = await Promise.all([
+        fetch(`${API_BASE}/products`, { headers }).then(res => res.json()),
+        fetch(`${API_BASE}/inventory`, { headers }).then(res => res.json()),
+        fetch(`${API_BASE}/inbound/warehouse-overview`, { headers }).then(res => res.json())
+      ]);
+
+      let totalInv = 0;
+      let lowStockCount = 0;
+
+      if (invRes.success) {
+        totalInv = invRes.data.reduce((sum, item) => sum + Number(item.So_Luong_Ton), 0);
       }
+
+      if (prodRes.success) {
+        lowStockCount = prodRes.products.filter(p => Number(p.inventory) <= 5).length;
+      }
+
+      // Xá»­ lÃ½ dá»¯ liá»‡u sá»©c chá»©a kho (MÃ´ phá»ng sá»©c chá»©a tá»‘i Ä‘a má»—i khu lÃ  500 Bin)
+      const MAX_BIN_PER_ZONE = 500; 
+      let capacityData = [];
+      if (overviewRes.success && overviewRes.data) {
+        Object.values(overviewRes.data).forEach(cat => {
+          Object.values(cat.zones).forEach(zone => {
+            const used = MAX_BIN_PER_ZONE - zone.emptyCount;
+            const percent = Math.round((used / MAX_BIN_PER_ZONE) * 100);
+            capacityData.push({
+              name: zone.zoneName,
+              code: zone.zoneCode,
+              used: used,
+              total: MAX_BIN_PER_ZONE,
+              percent: percent > 0 ? percent : 0
+            });
+          });
+        });
+      }
+
+      setStats({
+        totalProducts: prodRes.success ? prodRes.products.length : 0,
+        totalInventory: totalInv,
+        lowStock: lowStockCount,
+        capacity: capacityData.slice(0, 4) // Láº¥y 4 khu vá»±c tiÃªu biá»ƒu Ä‘á»ƒ váº½ biá»ƒu Ä‘á»“
+      });
+
     } catch (error) {
-      setMessage('âŒ Lá»—i káº¿t ná»‘i Ä‘áº¿n mÃ¡y chá»§!');
+      console.error('Lá»—i táº£i dá»¯ liá»‡u dashboard:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Giá»¯ láº¡i nÃºt Setup kho phÃ²ng há» giÃ¡o viÃªn báº¯t cháº¡y thá»­ tá»« Ä‘áº§u
+  const generateBins = async () => {
+    setSetupLoading(true);
+    setSetupMessage('â³ Äang nhá» thá»£ xÃ¢y dá»±ng 3000 vá»‹ trÃ­ ká»‡ kho...');
+    try {
+      const response = await fetch(`${API_BASE}/locations/generate`, { method: 'POST' });
+      const data = await response.json();
+      setSetupMessage(data.success ? `âœ… ${data.message}` : `âŒ Lá»—i: ${data.message}`);
+    } catch (error) {
+      setSetupMessage('âŒ Lá»—i káº¿t ná»‘i Ä‘áº¿n mÃ¡y chá»§!');
+    } finally {
+      setSetupLoading(false);
+    }
+  };
+
   return (
-    <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'Arial' }}>
-      <h1 style={{ color: '#176b52' }}>ðŸ“Š MÃ n hÃ¬nh Tá»•ng quan</h1>
-      <p>ChÃ o má»«ng báº¡n Ä‘Ã£ bÆ¡i Ä‘Æ°á»£c vÃ o bÃªn trong há»‡ thá»‘ng!</p>
-
-      {/* Khu vá»±c nÃºt báº¥m Setup */}
-      <div style={{ marginTop: '50px', padding: '30px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 0 10px rgba(0,0,0,0.1)', display: 'inline-block', maxWidth: '500px' }}>
-        <h3 style={{ marginTop: 0 }}>ðŸ› ï¸ CÃ i Ä‘áº·t há»‡ thá»‘ng ban Ä‘áº§u</h3>
-        <p style={{ fontSize: '15px', color: '#555' }}>
-          Há»‡ thá»‘ng hiá»‡n táº¡i chÆ°a cÃ³ vá»‹ trÃ­ lÆ°u trá»¯. HÃ£y báº¥m nÃºt dÆ°á»›i Ä‘Ã¢y Ä‘á»ƒ mÃ³ng tá»± Ä‘á»™ng Ä‘á»• vÃ  sinh ra gáº§n 3000 Ká»‡ Kho (Bin).
-        </p>
-        <p style={{ color: 'red', fontSize: '13px', fontStyle: 'italic' }}>
-          (LÆ°u Ã½: Chá»‰ cáº§n báº¥m 1 láº§n duy nháº¥t!)
-        </p>
-        
+    <div style={{ padding: '24px', fontFamily: 'Arial', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Activity size={24} color="#3b82f6" /> Tá»•ng quan Há»‡ thá»‘ng
+          </h2>
+          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>BÃ¡o cÃ¡o sá»‘ liá»‡u kho theo thá»i gian thá»±c</p>
+        </div>
         <button 
-          onClick={generateBins} 
-          disabled={loading}
-          style={{ 
-            marginTop: '10px',
-            padding: '12px 24px', 
-            backgroundColor: loading ? '#ccc' : '#176b52', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold',
-            fontSize: '16px'
-          }}
+          onClick={fetchDashboardData}
+          style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', color: '#475569', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
         >
-          {loading ? 'Äang xÃ¢y kho...' : 'ðŸš€ XÃ¢y dá»±ng 3000 vá»‹ trÃ­ Bin ngay!'}
+          <RefreshCw size={16} className={loading ? 'spin' : ''} /> Cáº­p nháº­t
         </button>
-
-        {/* NÆ¡i hiá»ƒn thá»‹ thÃ´ng bÃ¡o káº¿t quáº£ */}
-        {message && (
-          <p style={{ 
-            marginTop: '20px', 
-            fontWeight: 'bold', 
-            color: message.includes('âœ…') ? 'green' : (message.includes('â³') ? '#d48806' : 'red') 
-          }}>
-            {message}
-          </p>
-        )}
       </div>
+
+      {/* 4 Tháº» Chá»‰ Sá»‘ (Metric Cards) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+        <div style={{ background: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', borderLeft: '4px solid #3b82f6' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <p style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '14px', fontWeight: 'bold' }}>Tá»”NG MÃƒ HÃ€NG (SKU)</p>
+              <h3 style={{ margin: 0, color: '#1e293b', fontSize: '28px', fontWeight: '900' }}>{stats.totalProducts}</h3>
+            </div>
+            <div style={{ background: '#eff6ff', padding: '12px', borderRadius: '12px', color: '#3b82f6' }}><Tags size={24} /></div>
+          </div>
+        </div>
+
+        <div style={{ background: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', borderLeft: '4px solid #10b981' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <p style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '14px', fontWeight: 'bold' }}>Tá»”NG Tá»’N KHO THá»°C</p>
+              <h3 style={{ margin: 0, color: '#1e293b', fontSize: '28px', fontWeight: '900' }}>{stats.totalInventory}</h3>
+            </div>
+            <div style={{ background: '#ecfdf5', padding: '12px', borderRadius: '12px', color: '#10b981' }}><Package size={24} /></div>
+          </div>
+        </div>
+
+        <div style={{ background: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', borderLeft: '4px solid #f59e0b' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <p style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '14px', fontWeight: 'bold' }}>PHIáº¾U CHá»œ DUYá»†T</p>
+              <h3 style={{ margin: 0, color: '#1e293b', fontSize: '28px', fontWeight: '900' }}>0</h3>
+            </div>
+            <div style={{ background: '#fef3c7', padding: '12px', borderRadius: '12px', color: '#f59e0b' }}><ArrowDownToLine size={24} /></div>
+          </div>
+        </div>
+
+        <div style={{ background: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', borderLeft: '4px solid #ef4444' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <p style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '14px', fontWeight: 'bold' }}>HÃ€NG Sáº®P Háº¾T</p>
+              <h3 style={{ margin: 0, color: '#1e293b', fontSize: '28px', fontWeight: '900' }}>{stats.lowStock}</h3>
+            </div>
+            <div style={{ background: '#fee2e2', padding: '12px', borderRadius: '12px', color: '#ef4444' }}><Database size={24} /></div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+        
+        {/* Biá»ƒu Ä‘á»“ Sá»©c chá»©a Kho (Tá»± code báº±ng CSS) */}
+        <div style={{ flex: 2, minWidth: '400px', background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: '0 0 20px 0', color: '#1e293b', fontSize: '16px', fontWeight: 'bold' }}>CÃ´ng suáº¥t lÆ°u trá»¯ theo khu vá»±c</h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {stats.capacity.length === 0 && <p style={{ color: '#94a3b8' }}>ChÆ°a cÃ³ dá»¯ liá»‡u kho...</p>}
+            
+            {stats.capacity.map((zone, index) => (
+              <div key={index}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>
+                  <span>{zone.name} ({zone.code})</span>
+                  <span>{zone.percent}% ({zone.used}/{zone.total})</span>
+                </div>
+                {/* Thanh Progress Bar */}
+                <div style={{ width: '100%', height: '12px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                  <div style={{ 
+                    width: `${zone.percent}%`, 
+                    height: '100%', 
+                    background: zone.percent > 80 ? '#ef4444' : zone.percent > 50 ? '#f59e0b' : '#10b981',
+                    borderRadius: '10px',
+                    transition: 'width 1s ease-in-out'
+                  }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* NÃºt Setup nhanh (Cho Admin) */}
+        <div style={{ flex: 1, minWidth: '300px', background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ margin: '0 0 16px 0', color: '#1e293b', fontSize: '16px', fontWeight: 'bold' }}>ðŸ”§ Cáº¥u hÃ¬nh há»‡ thá»‘ng</h3>
+          <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
+            Náº¿u Ä‘Ã¢y lÃ  láº§n Ä‘áº§u tiÃªn khá»Ÿi cháº¡y dá»± Ã¡n, hÃ£y nháº¥n nÃºt bÃªn dÆ°á»›i Ä‘á»ƒ há»‡ thá»‘ng tá»± Ä‘á»™ng sinh ra 3000 vá»‹ trÃ­ lÆ°u trá»¯ (Bin) trong cÆ¡ sá»Ÿ dá»¯ liá»‡u.
+          </p>
+          <button 
+            onClick={generateBins} 
+            disabled={setupLoading}
+            style={{ width: '100%', padding: '12px', background: setupLoading ? '#cbd5e1' : '#0f172a', color: 'white', border: 'none', borderRadius: '8px', cursor: setupLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold', marginTop: '10px' }}
+          >
+            {setupLoading ? 'Äang Ä‘á»• mÃ³ng...' : 'Táº¡o 3000 Ká»‡/Bin'}
+          </button>
+          
+          {setupMessage && (
+            <div style={{ marginTop: '16px', padding: '12px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', background: setupMessage.includes('âœ…') ? '#d1fae5' : '#fee2e2', color: setupMessage.includes('âœ…') ? '#059669' : '#ef4444' }}>
+              {setupMessage}
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      <style>{`
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+      `}</style>
     </div>
   );
 }
@@ -1073,9 +1416,220 @@ function Login() {
 
 export default Login;
 </file>
+<file name="Outbound.jsx">
+import { useState, useEffect } from 'react';
+import { Truck, Plus, ClipboardList, CheckCircle2, RefreshCw, X, PackageOpen } from 'lucide-react';
+
+const API_BASE = 'https://doan-qlk.onrender.com/api';
+
+function Outbound() {
+  const [activeTab, setActiveTab] = useState('create');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [submitResult, setSubmitResult] = useState(null);
+
+  const userString = localStorage.getItem('user');
+  const currentUser = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
+  const userRole = currentUser?.role || '';
+  const canCreate = userRole === 'ADMIN' || userRole === 'KHO' || userRole === 'SALES';
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/products`, { headers: getAuthHeaders() });
+      const data = await response.json();
+      // Chá»‰ láº¥y nhá»¯ng sáº£n pháº©m Ä‘ang cÃ³ tá»“n kho > 0 Ä‘á»ƒ hiá»ƒn thá»‹ cho xuáº¥t
+      if (data.success) {
+        setProducts(data.products.filter(p => p.inventory > 0));
+      }
+    } catch (error) {
+      console.error('Lá»—i táº£i sáº£n pháº©m:', error);
+    }
+  };
+
+  const handleAddItem = () => {
+    setItems([...items, { productId: '', quantity: 1 }]);
+  };
+
+  const handleRemoveItem = (index) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (items.length === 0) return alert('Vui lÃ²ng thÃªm Ã­t nháº¥t 1 sáº£n pháº©m cáº§n xuáº¥t!');
+
+    // Kiá»ƒm tra tÃ­nh há»£p lá»‡
+    for (let item of items) {
+      if (!item.productId) return alert('Vui lÃ²ng chá»n sáº£n pháº©m!');
+      if (!item.quantity || item.quantity <= 0) return alert('Sá»‘ lÆ°á»£ng xuáº¥t pháº£i lá»›n hÆ¡n 0!');
+      
+      const productObj = products.find(p => p.id === parseInt(item.productId));
+      if (productObj && item.quantity > productObj.inventory) {
+        return alert(`Sáº£n pháº©m ${productObj.name} chá»‰ cÃ²n ${productObj.inventory} cÃ¡i trong kho, khÃ´ng Ä‘á»§ Ä‘á»ƒ xuáº¥t ${item.quantity}!`);
+      }
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/outbound`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          user_id: currentUser?.id,
+          items: items.map(item => ({
+            productId: parseInt(item.productId),
+            quantity: parseInt(item.quantity)
+          }))
+        })
+      });
+      
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitResult(data.data);
+        setItems([]);
+        fetchProducts(); // Táº£i láº¡i Ä‘á»ƒ update sá»‘ tá»“n kho má»›i
+        setTimeout(() => setSubmitResult(null), 5000);
+      } else {
+        alert('Lá»—i: ' + data.message);
+      }
+    } catch (error) {
+      alert('Lá»—i káº¿t ná»‘i Ä‘áº¿n mÃ¡y chá»§!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: '24px', fontFamily: 'Arial', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold' }}>Xuáº¥t Kho (Outbound)</h2>
+          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>QuÃ©t vÃ  xuáº¥t hÃ ng ra khá»i ká»‡ Bin</p>
+        </div>
+      </div>
+
+      {submitResult && (
+        <div style={{ padding: '16px 20px', background: '#eff6ff', color: '#1d4ed8', borderRadius: '12px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', border: '2px solid #3b82f6' }}>
+          <CheckCircle2 size={24} />
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>ÄÃ£ xuáº¥t kho thÃ nh cÃ´ng!</div>
+            <div style={{ fontSize: '14px' }}>MÃ£ phiáº¿u xuáº¥t: <strong>{submitResult.receiptCode}</strong></div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '800px' }}>
+        <h3 style={{ margin: '0 0 20px 0', color: '#1e293b', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <PackageOpen size={20} color="#f59e0b" /> Láº­p Phiáº¿u Xuáº¥t Kho
+        </h3>
+
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Sáº£n pháº©m cáº§n xuáº¥t</label>
+            <button 
+              type="button" onClick={handleAddItem} disabled={!canCreate}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: canCreate ? '#f59e0b' : '#94a3b8', color: 'white', border: 'none', borderRadius: '8px', cursor: canCreate ? 'pointer' : 'not-allowed', fontWeight: 'bold', fontSize: '13px' }}
+            >
+              <Plus size={16} /> ThÃªm vÃ o phiáº¿u
+            </button>
+          </div>
+
+          {items.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '2px dashed #e2e8f0' }}>
+              <Truck size={48} color="#94a3b8" style={{ marginBottom: '12px' }} />
+              <p style={{ color: '#64748b', margin: 0 }}>ChÆ°a cÃ³ sáº£n pháº©m nÃ o cáº§n xuáº¥t</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {items.map((item, index) => {
+                const selectedProduct = products.find(p => p.id === parseInt(item.productId));
+                return (
+                  <div key={index} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ width: '32px', height: '32px', background: '#f59e0b', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px', flexShrink: 0 }}>
+                      {index + 1}
+                    </div>
+
+                    <select 
+                      value={item.productId} 
+                      onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                      disabled={!canCreate}
+                      style={{ flex: 2, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }}
+                    >
+                      <option value="">-- Chá»n sáº£n pháº©m cÃ³ trong kho --</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.sku} - {p.name} (Tá»“n hiá»‡n táº¡i: {p.inventory})
+                        </option>
+                      ))}
+                    </select>
+
+                    <input 
+                      type="number" min="1" max={selectedProduct?.inventory || 999}
+                      value={item.quantity} 
+                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                      disabled={!canCreate}
+                      style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', textAlign: 'center' }}
+                      placeholder="SL xuáº¥t"
+                    />
+
+                    <button 
+                      type="button" onClick={() => handleRemoveItem(index)} disabled={!canCreate}
+                      style={{ padding: '10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '8px', cursor: canCreate ? 'pointer' : 'not-allowed' }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {canCreate && (
+          <button 
+            type="button" onClick={handleSubmit} disabled={loading || items.length === 0}
+            style={{ width: '100%', padding: '14px', background: loading || items.length === 0 ? '#94a3b8' : '#f59e0b', color: 'white', border: 'none', borderRadius: '10px', cursor: loading || items.length === 0 ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          >
+            {loading ? <><RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} /> Äang xá»­ lÃ½...</> : <><Truck size={18} /> XÃ¡c Nháº­n Xuáº¥t Kho</>}
+          </button>
+        )}
+      </div>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+export default Outbound;
+</file>
 <file name="Products.jsx">
 import { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2 } from 'lucide-react';
+
+// ðŸ‘‰ CHá»ˆ Cáº¦N Sá»¬A ÄÃšNG 1 DÃ’NG NÃ€Y KHI MUá»N Äá»”I LINK SERVER
+// Khi test á»Ÿ mÃ¡y: dÃ¹ng 'http://localhost:5000/api'
+// Khi ná»™p bÃ¡o cÃ¡o: dÃ¹ng 'https://doan-qlk.onrender.com/api'
+const API_BASE = 'http://localhost:5000/api'; 
 
 // Configuration for category, brand linkage and dynamic units
 const categoryConfig = {
@@ -1162,7 +1716,7 @@ function Products() {
 
     const fetchProducts = async () => {
         try {
-            const response = await fetch('https://doan-qlk.onrender.com/api/products');
+            const response = await fetch(`${API_BASE}/products`);
             const data = await response.json();
             if (data.success) setProducts(data.products);
         } catch (error) {
@@ -1235,7 +1789,7 @@ function Products() {
         if (window.confirm(`XÃ¡c nháº­n xÃ³a sáº£n pháº©m: "${name}" vÄ©nh viá»…n khá»i danh má»¥c?`)) {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`https://doan-qlk.onrender.com/api/products/${id}`, {
+                const response = await fetch(`${API_BASE}/products/${id}`, {
                     method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await response.json();
@@ -1250,7 +1804,7 @@ function Products() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const url = editingId ? `https://doan-qlk.onrender.com/api/products/${editingId}` : 'https://doan-qlk.onrender.com/api/products';
+            const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
             const method = editingId ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
@@ -1539,27 +2093,365 @@ function Products() {
 
 export default Products;
 </file>
+<file name="Sales.jsx">
+import { useState, useEffect } from 'react';
+import { 
+  ShoppingCart, Plus, Eye, X, RefreshCw, ClipboardList, 
+  Check, CheckCircle2, Trash2, DollarSign, User 
+} from 'lucide-react';
+
+const API_BASE = 'https://doan-qlk.onrender.com/api';
+
+function Sales() {
+  const [activeTab, setActiveTab] = useState('create'); // 'create' | 'list'
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // State form táº¡o Ä‘Æ¡n
+  const [items, setItems] = useState([]);
+  const [customerId, setCustomerId] = useState('');
+  const [submitResult, setSubmitResult] = useState(null);
+  
+  // State modal chi tiáº¿t
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  const userString = localStorage.getItem('user');
+  const currentUser = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
+  const userRole = currentUser?.role || '';
+  const userLevel = currentUser?.level || '';
+  
+  // Kiá»ƒm tra quyá»n duyá»‡t Ä‘Æ¡n (Admin hoáº·c TrÆ°á»Ÿng phÃ²ng Sale)
+  const canApprove = userRole === 'ADMIN' || (userRole === 'SALES' && userLevel === 'MANAGER');
+
+  const getAuthHeaders = () => {
+    return { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    };
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCustomers();
+    if (activeTab === 'list') {
+      fetchOrders();
+    }
+  }, [activeTab]);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/products`, { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (data.success) setProducts(data.products);
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/customers`, { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        setCustomers(data.data);
+        if (data.data.length > 0) setCustomerId(data.data[0].id.toString());
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/sales`, { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (data.success) setOrders(data.data);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  const fetchOrderDetails = async (id) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/sales/${id}`, { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedOrder(data.data);
+        setShowDetailModal(true);
+      }
+    } catch (e) { alert('Lá»—i táº£i chi tiáº¿t Ä‘Æ¡n hÃ ng!'); }
+    finally { setLoading(false); }
+  };
+
+  const handleAddItem = () => {
+    setItems([...items, { productId: '', quantity: 1, unitPrice: 0 }]);
+  };
+
+  const handleRemoveItem = (index) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...items];
+    if (field === 'productId') {
+      const prod = products.find(p => p.id === parseInt(value));
+      newItems[index] = { ...newItems[index], productId: value, unitPrice: prod ? prod.sale_price : 0 };
+    } else {
+      newItems[index] = { ...newItems[index], [field]: value };
+    }
+    setItems(newItems);
+  };
+
+  const totalAmount = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!customerId) return alert('Vui lÃ²ng chá»n khÃ¡ch hÃ ng!');
+    if (items.length === 0) return alert('Vui lÃ²ng thÃªm Ã­t nháº¥t 1 sáº£n pháº©m!');
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/sales`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          customer_id: parseInt(customerId),
+          sale_person_id: currentUser?.id,
+          items: items.map(item => ({
+            productId: parseInt(item.productId),
+            quantity: parseInt(item.quantity),
+            unitPrice: parseFloat(item.unitPrice)
+          }))
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubmitResult({ receiptCode: data.orderCode, totalProducts: items.length });
+        setItems([]);
+        setTimeout(() => {
+          setActiveTab('list');
+          setSubmitResult(null);
+        }, 2000);
+      } else alert(data.message);
+    } catch (error) { alert('Lá»—i mÃ¡y chá»§!'); }
+    finally { setLoading(false); }
+  };
+
+  const handleApprove = async (orderId) => {
+    if (!confirm('XÃ¡c nháº­n duyá»‡t Ä‘Æ¡n hÃ ng nÃ y phÃ¡t hÃ nh xuá»‘ng bá»™ pháº­n Kho váº­n?')) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/sales/approve/${orderId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ manager_id: currentUser?.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        fetchOrders();
+        setShowDetailModal(false);
+      } else alert(data.message);
+    } catch (e) { alert('Lá»—i duyá»‡t Ä‘Æ¡n!'); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ padding: '24px', fontFamily: 'Arial', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+      {/* Header & Tabs Ä‘iá»u hÆ°á»›ng giá»‘ng há»‡t bÃ i cÅ© */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold' }}>Quáº£n lÃ½ Kinh doanh (Sales)</h2>
+          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>Láº­p Ä‘Æ¡n xuáº¥t bÃ¡n thiáº¿t bá»‹ Ä‘iá»‡n mÃ¡y</p>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '4px', background: 'white', padding: '4px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <button onClick={() => setActiveTab('create')} style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', background: activeTab === 'create' ? '#3b82f6' : 'transparent', color: activeTab === 'create' ? 'white' : '#64748b' }}>
+            <Plus size={16} style={{ marginRight: '6px' }} /> Láº­p Ä‘Æ¡n má»›i
+          </button>
+          <button onClick={() => { setActiveTab('list'); }} style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', background: activeTab === 'list' ? '#3b82f6' : 'transparent', color: activeTab === 'list' ? 'white' : '#64748b' }}>
+            <ClipboardList size={16} style={{ marginRight: '6px' }} /> Danh sÃ¡ch Ä‘Æ¡n
+          </button>
+        </div>
+      </div>
+
+      {submitResult && (
+        <div style={{ padding: '16px 20px', background: '#d1fae5', color: '#059669', borderRadius: '12px', marginBottom: '20px', border: '2px solid #10b981', display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <CheckCircle2 size={24} />
+          <div>
+            <div style={{ fontWeight: 'bold' }}>Láº­p Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng!</div>
+            <div>MÃ£ Ä‘Æ¡n: <strong>{submitResult.receiptCode}</strong> Ä‘ang gá»­i chá» sáº¿p duyá»‡t.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 1: Láº­p Ä‘Æ¡n má»›i */}
+      {activeTab === 'create' && (
+        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 2, background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Chá»n Äá»‘i TÃ¡c KhÃ¡ch HÃ ng *</label>
+              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
+                {customers.map(c => <option key={c.id} value={c.id}>{c.customer_code} - {c.name} ({c.phone})</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Danh má»¥c sáº£n pháº©m bÃ¡n</label>
+                <button type="button" onClick={handleAddItem} style={{ padding: '8px 14px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>+ ThÃªm hÃ ng</button>
+              </div>
+
+              {items.length === 0 ? (
+                <div style={{ padding: '40px', textFilter: 'center', background: '#f8fafc', borderRadius: '12px', border: '2px dashed #e2e8f0', textAlign: 'center', color: '#94a3b8' }}>ChÆ°a chá»n sáº£n pháº©m nÃ o</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {items.map((item, index) => (
+                    <div key={index} style={{ display: 'flex', gap: '12px', background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', alignItems: 'center' }}>
+                      <select value={item.productId} onChange={(e) => handleItemChange(index, 'productId', e.target.value)} style={{ flex: 2, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <option value="">-- Chá»n Ä‘iá»‡n mÃ¡y --</option>
+                        {products.map(p => <option key={p.id} value={p.id}>{p.sku} - {p.name}</option>)}
+                      </select>
+                      <input type="number" min="1" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} style={{ width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }} />
+                      <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} style={{ width: '130px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} placeholder="ÄÆ¡n giÃ¡ láº»" />
+                      <button type="button" onClick={() => handleRemoveItem(index)} style={{ padding: '10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><X size={16}/></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button onClick={handleSubmit} disabled={items.length === 0} style={{ width: '100%', padding: '14px', background: items.length === 0 ? '#94a3b8' : '#3b82f6', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>ðŸš€ Gá»­i LÃªn ÄÆ¡n HÃ ng Chá» Duyá»‡t</button>
+          </div>
+
+          <div style={{ flex: 1, background: '#0f172a', color: 'white', padding: '24px', borderRadius: '16px', height: 'fit-content' }}>
+            <h4 style={{ margin: '0 0 16px 0', color: '#3b82f6', display: 'flex', gap: '6px' }}><DollarSign size={18}/>Tá»•ng giÃ¡ trá»‹ Ä‘Æ¡n hÃ ng</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '22px', fontWeight: 'bold', color: '#34d399' }}>
+              <span>Tá»”NG TIá»€N:</span>
+              <span>{totalAmount.toLocaleString('vi-VN')} Ä‘</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Danh sÃ¡ch Ä‘Æ¡n hÃ ng */}
+      {activeTab === 'list' && (
+        <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#64748b' }}>â³ Äang táº£i danh sÃ¡ch Ä‘Æ¡n hÃ ng...</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#64748b', borderBottom: '2px solid #e2e8f0' }}>MÃ£ ÄÆ¡n</th>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#64748b', borderBottom: '2px solid #e2e8f0' }}>KhÃ¡ch HÃ ng</th>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#64748b', borderBottom: '2px solid #e2e8f0' }}>Tá»•ng Tiá»n</th>
+                    <th style={{ padding: '12px', textAlign: 'center', color: '#64748b', borderBottom: '2px solid #e2e8f0' }}>Tráº¡ng ThÃ¡i</th>
+                    <th style={{ padding: '12px', textAlign: 'center', color: '#64748b', borderBottom: '2px solid #e2e8f0' }}>Thao TÃ¡c</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr><td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>ChÆ°a cÃ³ Ä‘Æ¡n hÃ ng nÃ o</td></tr>
+                  ) : orders.map(order => (
+                    <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '14px', fontWeight: 'bold' }}>{order.order_code}</td>
+                      <td style={{ padding: '14px', color: '#334155' }}>{order.customer_name || 'KhÃ¡ch láº»'}</td>
+                      <td style={{ padding: '14px', fontWeight: 'bold', color: '#10b981' }}>{Number(order.total_amount).toLocaleString('vi-VN')} Ä‘</td>
+                      <td style={{ padding: '14px', textAlign: 'center' }}>
+                        <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', background: order.status === 'PENDING' ? '#fef3c7' : '#d1fae5', color: order.status === 'PENDING' ? '#d97706' : '#059669' }}>
+                          {order.status === 'PENDING' ? 'Chá» duyá»‡t' : 'ÄÃ£ duyá»‡t bÃ¡n'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px', textAlign: 'center' }}>
+                        <button onClick={() => fetchOrderDetails(order.id)} style={{ padding: '6px 12px', background: '#eff6ff', color: '#1d4ed8', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', gap: '4px', alignItems: 'center' }}><Eye size={14}/> Chi tiáº¿t</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal chi tiáº¿t Ä‘Æ¡n hÃ ng */}
+      {showDetailModal && selectedOrder && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'white', borderRadius: '16px', width: '700px', padding: '24px', maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>Chi tiáº¿t Ä‘Æ¡n hÃ ng: {selectedOrder.order_code}</h3>
+              <button onClick={() => setShowDetailModal(false)} style={{ border: 'none', background: '#f1f5f9', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}><X/></button>
+            </div>
+
+            <p><strong>KhÃ¡ch hÃ ng:</strong> {selectedOrder.customer_name}</p>
+            <p><strong>NhÃ¢n viÃªn láº­p Ä‘Æ¡n:</strong> {selectedOrder.sale_person_name}</p>
+            <p style={{ marginBottom: '16px' }}><strong>Tráº¡ng thÃ¡i:</strong> {selectedOrder.status}</p>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ padding: '8px', textAlign: 'left', fontSize: '13px' }}>SKU</th>
+                  <th style={{ padding: '8px', textAlign: 'left', fontSize: '13px' }}>TÃªn Sáº£n Pháº©m</th>
+                  <th style={{ padding: '8px', textAlign: 'center', fontSize: '13px' }}>SL</th>
+                  <th style={{ padding: '8px', textAlign: 'right', fontSize: '13px' }}>GiÃ¡ BÃ¡n</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedOrder.items?.map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px', fontSize: '13px', fontWeight: 'bold' }}>{item.sku}</td>
+                    <td style={{ padding: '8px', fontSize: '13px' }}>{item.product_name}</td>
+                    <td style={{ padding: '8px', fontSize: '13px', textAlign: 'center' }}>{item.quantity}</td>
+                    <td style={{ padding: '8px', fontSize: '13px', textAlign: 'right' }}>{Number(item.unit_price).toLocaleString('vi-VN')} Ä‘</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '18px', borderTop: '1px dashed #cbd5e1', paddingTop: '14px' }}>
+              <span>Tá»”NG TIá»€N ÄÆ N:</span>
+              <span style={{ color: '#10b981' }}>{Number(selectedOrder.total_amount).toLocaleString('vi-VN')} Ä‘</span>
+            </div>
+
+            {canApprove && selectedOrder.status === 'PENDING' && (
+              <button onClick={() => handleApprove(selectedOrder.id)} style={{ width: '100%', padding: '12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', marginTop: '20px', cursor: 'pointer' }}>âœ“ Sáº¿p PhÃª Duyá»‡t ÄÆ¡n HÃ ng NÃ y</button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <RefreshCw size={40} color="#3b82f6" style={{ animation: 'spin 1s linear infinite' }} />
+        </div>
+      )}
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+export default Sales;
+</file>
 <file name="Warehouse.jsx">
 import { useState, useEffect } from 'react';
+import { Package, MapPin, RefreshCw, Layers } from 'lucide-react';
 
 function Warehouse() {
-  // Biáº¿n lÆ°u trá»¯ danh sÃ¡ch hÃ ng hÃ³a láº¥y tá»« Backend
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // HÃ m gá»i API láº¥y dá»¯ liá»‡u
   const fetchInventory = async () => {
     try {
-      // Láº¥y tháº» bÃ i (token) tá»« bá»™ nhá»› ra
+      setLoading(true);
       const token = localStorage.getItem('token');
-
-      // Gá»­i yÃªu cáº§u Ä‘áº¿n phÃ²ng Kho cá»§a Backend
       const response = await fetch('https://doan-qlk.onrender.com/api/inventory', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // ÄÃ‚Y LÃ€ ÄIá»‚M QUAN TRá»ŒNG NHáº¤T: TrÃ¬nh tháº» bÃ i ra cho báº£o vá»‡ (Middleware) xem
           'Authorization': `Bearer ${token}` 
         }
       });
@@ -1567,60 +2459,121 @@ function Warehouse() {
       const data = await response.json();
 
       if (data.success) {
-        setInventory(data.data); // Äá»• dá»¯ liá»‡u láº¥y Ä‘Æ°á»£c vÃ o biáº¿n inventory
+        setInventory(data.data);
       } else {
         setError(data.message);
       }
     } catch (err) {
       setError('âŒ KhÃ´ng thá»ƒ káº¿t ná»‘i Ä‘áº¿n mÃ¡y chá»§!');
     } finally {
-      setLoading(false); // DÃ¹ thÃ nh cÃ´ng hay tháº¥t báº¡i cÅ©ng táº¯t hiá»‡u á»©ng chá»
+      setLoading(false);
     }
   };
 
-  // useEffect giÃºp tá»± Ä‘á»™ng cháº¡y hÃ m fetchInventory ngay khi vá»«a má»Ÿ trang nÃ y lÃªn
   useEffect(() => {
     fetchInventory();
   }, []);
 
-  return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h2 style={{ color: '#176b52' }}>ðŸ“¦ Quáº£n lÃ½ Tá»“n Kho</h2>
-      
-      {loading && <p>â³ Äang táº£i dá»¯ liá»‡u tá»« kho...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+  // TÃ­nh tá»•ng sá»‘ lÆ°á»£ng hÃ ng trong kho
+  const totalItems = inventory.reduce((sum, item) => sum + Number(item.So_Luong_Ton), 0);
 
-      {/* Váº½ báº£ng hiá»ƒn thá»‹ dá»¯ liá»‡u */}
+  // Lá»c sáº£n pháº©m theo Ã´ tÃ¬m kiáº¿m
+  const filteredInventory = inventory.filter(item => 
+    item.Ten_San_Pham.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    item.Ma_San_Pham.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div style={{ padding: '24px', fontFamily: 'Arial', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+      {/* TiÃªu Ä‘á» & Tá»•ng quan */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Layers size={24} color="#10b981" /> Quáº£n lÃ½ Tá»“n Kho Thá»±c Táº¿
+          </h2>
+          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>
+            GiÃ¡m sÃ¡t vá»‹ trÃ­ (Bin) vÃ  sá»‘ lÆ°á»£ng hÃ ng hÃ³a Ä‘ang lÆ°u trá»¯
+          </p>
+        </div>
+        
+        <div style={{ background: 'white', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div>
+            <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 'bold' }}>Tá»”NG Máº¶T HÃ€NG</div>
+            <div style={{ color: '#1e293b', fontSize: '20px', fontWeight: 'bold' }}>{inventory.length}</div>
+          </div>
+          <div style={{ width: '1px', height: '30px', background: '#e2e8f0' }}></div>
+          <div>
+            <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 'bold' }}>Tá»”NG Sáº¢N PHáº¨M</div>
+            <div style={{ color: '#10b981', fontSize: '20px', fontWeight: 'bold' }}>{totalItems}</div>
+          </div>
+          <button onClick={fetchInventory} style={{ background: '#f1f5f9', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', marginLeft: '10px' }} title="LÃ m má»›i">
+            <RefreshCw size={18} color="#475569" />
+          </button>
+        </div>
+      </div>
+
+      {/* Thanh tÃ¬m kiáº¿m */}
+      <div style={{ background: 'white', padding: '16px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <input 
+          type="text" 
+          placeholder="ðŸ” TÃ¬m kiáº¿m theo TÃªn sáº£n pháº©m hoáº·c MÃ£ SKU..." 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }}
+        />
+      </div>
+
+      {/* ThÃ´ng bÃ¡o tráº¡ng thÃ¡i */}
+      {loading && <p style={{ color: '#64748b', textAlign: 'center' }}>â³ Äang kiá»ƒm kÃª láº¡i kho, em Ä‘á»£i chÃºt nhÃ©...</p>}
+      {error && <p style={{ color: '#ef4444', textAlign: 'center', fontWeight: 'bold' }}>{error}</p>}
+
+      {/* Báº£ng dá»¯ liá»‡u chuyÃªn nghiá»‡p */}
       {!loading && !error && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px', backgroundColor: 'white', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#001529', color: 'white', textAlign: 'left' }}>
-              <th style={{ padding: '12px', border: '1px solid #ddd' }}>MÃ£ HÃ ng (SKU)</th>
-              <th style={{ padding: '12px', border: '1px solid #ddd' }}>TÃªn Sáº£n Pháº©m</th>
-              <th style={{ padding: '12px', border: '1px solid #ddd' }}>Tá»“n Kho</th>
-              <th style={{ padding: '12px', border: '1px solid #ddd' }}>Vá»‹ TrÃ­ (Bin)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inventory.length === 0 ? (
-              <tr>
-                <td colSpan="4" style={{ padding: '20px', textAlign: 'center' }}>Kho Ä‘ang trá»‘ng, chÆ°a cÃ³ hÃ ng hÃ³a nÃ o!</td>
+        <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f1f5f9' }}>
+                <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#475569', borderBottom: '1px solid #e2e8f0', width: '20%' }}>MÃƒ HÃ€NG (SKU)</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#475569', borderBottom: '1px solid #e2e8f0', width: '30%' }}>TÃŠN Sáº¢N PHáº¨M</th>
+                <th style={{ padding: '16px', textAlign: 'center', fontSize: '13px', color: '#475569', borderBottom: '1px solid #e2e8f0', width: '15%' }}>Tá»’N KHO THá»°C</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#475569', borderBottom: '1px solid #e2e8f0', width: '35%' }}>Vá»Š TRÃ LÆ¯U TRá»® (BIN)</th>
               </tr>
-            ) : (
-              inventory.map((item, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px', border: '1px solid #ddd', fontWeight: 'bold' }}>{item.Ma_San_Pham}</td>
-                  <td style={{ padding: '12px', border: '1px solid #ddd' }}>{item.Ten_San_Pham}</td>
-                  <td style={{ padding: '12px', border: '1px solid #ddd', color: '#176b52', fontWeight: 'bold' }}>{item.So_Luong_Ton}</td>
-                  <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                    {/* Danh_Sach_Bin tráº£ vá» lÃ  máº£ng, nÃªn mÃ¬nh join nÃ³ láº¡i thÃ nh chuá»—i cÃ¡ch nhau báº±ng dáº¥u pháº©y */}
-                    {item.Danh_Sach_Bin?.join(', ')}
+            </thead>
+            <tbody>
+              {filteredInventory.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                    <Package size={48} style={{ margin: '0 auto 12px auto', display: 'block', opacity: 0.5 }} />
+                    Kho Ä‘ang trá»‘ng hoáº·c khÃ´ng tÃ¬m tháº¥y sáº£n pháº©m nÃ y!
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredInventory.map((item, index) => (
+                  <tr key={index} style={{ borderBottom: '1px solid #f1f5f9', transition: '0.2s' }}>
+                    <td style={{ padding: '16px', fontSize: '14px', fontWeight: 'bold', color: '#3b82f6' }}>
+                      {item.Ma_San_Pham}
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>
+                      {item.Ten_San_Pham}
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '16px', textAlign: 'center', fontWeight: 'bold', color: '#10b981' }}>
+                      {item.So_Luong_Ton}
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {item.Danh_Sach_Bin && item.Danh_Sach_Bin.map((bin, idx) => (
+                          <span key={idx} style={{ background: '#ecfdf5', border: '1px solid #10b981', color: '#059669', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <MapPin size={12} /> {bin}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -1632,11 +2585,12 @@ export default Warehouse;
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Layout from './components/Layout'; // KÃ©o Layout vá»«a táº¡o vÃ o
+import Layout from './components/Layout'; 
 import Warehouse from './pages/Warehouse';
 import Products from './pages/Products';
 import Inbound from './pages/Inbound';
-
+import Sales from './pages/Sales';
+import Customers from './pages/Customers'; // 1. IMPORT FILE KHÃCH HÃ€NG VÃ€O ÄÃ‚Y
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -1655,6 +2609,8 @@ function App() {
           <Route path="/warehouse" element={<Warehouse />} />
           <Route path="/products" element={<Products />} />
           <Route path="/inbound" element={<Inbound />} />
+          <Route path="/sales" element={<Sales />} />
+          <Route path="/customers" element={<Customers />} /> {/* 2. KHAI BÃO TUYáº¾N ÄÆ¯á»œNG KHÃCH HÃ€NG á»ž ÄÃ‚Y */}
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />
