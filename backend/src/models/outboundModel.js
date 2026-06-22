@@ -23,7 +23,7 @@ const executeOutbound = async (userId, receiptCode, productDetails) => {
     for (let bin of item.bins) {
       // Dọn sạch Bin: Đổi thành EMPTY, xóa tên sản phẩm, đưa số lượng về 0
       await db.query(
-        `UPDATE locations SET status = 'EMPTY', product_id = NULL, current_qty = 0 WHERE id = $1`,
+        `UPDATE locations SET status = 'EMPTY', product_id = NULL, current_qty = 0, updated_at = NOW() WHERE id = $1`,
         [bin.id]
       );
       
@@ -33,6 +33,14 @@ const executeOutbound = async (userId, receiptCode, productDetails) => {
         [receiptId, item.productId, bin.id]
       );
     }
+    
+    // ĐIỂM CHỐT QUAN TRỌNG: Trừ tổng tồn kho trong bảng inventory
+    await db.query(
+      `UPDATE inventory 
+       SET quantity = quantity - $1, updated_at = NOW() 
+       WHERE product_id = $2 AND warehouse_id = 1`,
+      [item.quantity, item.productId]
+    );
   }
   return receiptId;
 };

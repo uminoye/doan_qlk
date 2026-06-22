@@ -101,27 +101,179 @@ module.exports = { createRequest, approveRequest, scanBarcode };
 <file name="inboundController.js">
 const inboundService = require('../services/inboundService');
 
+// ============================================
+// Táº O PHIáº¾U NHáº¬P KHO Má»šI
+// POST /api/inbound
+// ============================================
 const handleInbound = async (req, res) => {
   try {
-    const { user_id, items } = req.body;
-    
+    const { items } = req.body;
+    const userId = req.user?.id || req.body.user_id;
+
     if (!items || items.length === 0) {
-      return res.status(400).json({ success: false, message: 'ChÆ°a chá»n sáº£n pháº©m Ä‘á»ƒ nháº­p kho!' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Danh sÃ¡ch sáº£n pháº©m trá»‘ng! Vui lÃ²ng thÃªm Ã­t nháº¥t 1 sáº£n pháº©m.' 
+      });
     }
 
-    const result = await inboundService.createInboundReceipt(user_id, items);
+    // Validate tá»«ng item
+    for (let item of items) {
+      if (!item.productId || !item.quantity || item.quantity <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Má»—i sáº£n pháº©m pháº£i cÃ³ productId vÃ  quantity > 0'
+        });
+      }
+    }
+
+    const result = await inboundService.createInboundReceipt(userId, items);
     
     res.json({
       success: true,
-      message: `ðŸŽ‰ Nháº­p kho thÃ nh cÃ´ng! MÃ£ phiáº¿u: ${result.receiptCode}`,
+      message: `Nháº­p kho thÃ nh cÃ´ng! MÃ£ phiáº¿u: ${result.receiptCode}`,
       data: result
     });
   } catch (error) {
+    console.error('Inbound Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-module.exports = { handleInbound };
+// ============================================
+// Láº¤Y DANH SÃCH PHIáº¾U NHáº¬P
+// GET /api/inbound
+// ============================================
+const getInboundReceipts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const result = await inboundService.getInboundReceipts(page, limit);
+    
+    res.json({
+      success: true,
+      data: result.receipts,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    console.error('Get Receipts Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ============================================
+// Láº¤Y CHI TIáº¾T 1 PHIáº¾U NHáº¬P
+// GET /api/inbound/:id
+// ============================================
+const getInboundReceiptById = async (req, res) => {
+  try {
+    const receiptId = parseInt(req.params.id);
+    
+    if (!receiptId) {
+      return res.status(400).json({ success: false, message: 'ID phiáº¿u nháº­p khÃ´ng há»£p lá»‡' });
+    }
+
+    const receipt = await inboundService.getReceiptDetails(receiptId);
+    
+    res.json({
+      success: true,
+      data: receipt
+    });
+  } catch (error) {
+    console.error('Get Receipt Detail Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ============================================
+// Gá»¢I Ã Vá»Š TRÃ BIN
+// POST /api/inbound/suggest-bins
+// ============================================
+const suggestBins = async (req, res) => {
+  try {
+    const { product_id, quantity } = req.body;
+
+    if (!product_id) {
+      return res.status(400).json({ success: false, message: 'Vui lÃ²ng chá»n sáº£n pháº©m' });
+    }
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ success: false, message: 'Sá»‘ lÆ°á»£ng pháº£i lá»›n hÆ¡n 0' });
+    }
+
+    const result = await inboundService.suggestBinLocations(product_id, quantity);
+    
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Suggest Bins Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ============================================
+// Láº¤Y Tá»”NG QUAN KHO (TRáº NG THÃI CÃC KHU Vá»°C)
+// GET /api/inbound/warehouse-overview
+// ============================================
+const getWarehouseOverview = async (req, res) => {
+  try {
+    const result = await inboundService.getWarehouseOverview();
+    
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Warehouse Overview Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ============================================
+// DUYá»†T PHIáº¾U NHáº¬P KHO
+// PUT /api/inbound/:id/approve
+// ============================================
+const approveInbound = async (req, res) => {
+  try {
+    const receiptId = parseInt(req.params.id);
+    const { action } = req.body; // 'approve' hoáº·c 'reject'
+
+    if (!receiptId) {
+      return res.status(400).json({ success: false, message: 'ID phiáº¿u nháº­p khÃ´ng há»£p lá»‡' });
+    }
+
+    if (!action || !['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Action pháº£i lÃ  "approve" hoáº·c "reject"' 
+      });
+    }
+
+    const result = await inboundService.approveReceipt(receiptId, action);
+    
+    res.json({
+      success: true,
+      message: result.message,
+      data: result
+    });
+  } catch (error) {
+    console.error('Approve Inbound Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  handleInbound,
+  getInboundReceipts,
+  getInboundReceiptById,
+  suggestBins,
+  getWarehouseOverview,
+  approveInbound
+};
+
 </file>
 <file name="inventoryController.js">
 const inventoryService = require('../services/inventoryService');
@@ -287,7 +439,26 @@ const verifyManager = (req, res, next) => {
   });
 };
 
-module.exports = { verifyToken, verifyManager };
+/**
+ * Middleware kiá»ƒm tra quyá»n theo danh sÃ¡ch roles
+ * @param {string[]} allowedRoles - Máº£ng cÃ¡c role Ä‘Æ°á»£c phÃ©p
+ */
+const requireRoles = (allowedRoles) => {
+  return (req, res, next) => {
+    verifyToken(req, res, () => {
+      if (allowedRoles.includes(req.user.role)) {
+        next();
+      } else {
+        res.status(403).json({ 
+          success: false,
+          message: `âŒ KhÃ´ng cÃ³ quyá»n! Chá»‰ ${allowedRoles.join(', ')} má»›i Ä‘Æ°á»£c thá»±c hiá»‡n thao tÃ¡c nÃ y.` 
+        });
+      }
+    });
+  };
+};
+
+module.exports = { verifyToken, verifyManager, requireRoles };
 </file>
 <file name="authModel.js">
 const db = require('./db');
@@ -416,53 +587,247 @@ module.exports = { createShipment, approveShipment, getProductBySKU, updateScann
 <file name="inboundModel.js">
 const db = require('./db');
 
-// Láº¥y thÃ´ng tin sáº£n pháº©m Ä‘á»ƒ biáº¿t nÃ³ thuá»™c Khu vá»±c nÃ o
+// ============================================
+// Láº¤Y THÃ”NG TIN Sáº¢N PHáº¨M
+// ============================================
 const getProductInfo = async (productId) => {
   const result = await db.query('SELECT * FROM products WHERE id = $1', [productId]);
   return result.rows[0];
 };
 
-// TÃ¬m cÃ¡c Bin Ä‘ang trá»‘ng trong Ä‘Ãºng Khu vá»±c Ä‘Ã³
-const getEmptyBins = async (zoneCode, neededQty) => {
-  // Æ¯u tiÃªn xáº¿p tá»« Táº§ng 1 lÃªn Táº§ng trÃªn, tá»« Ká»‡ 1 Ä‘áº¿n Ká»‡ cuá»‘i cho khoa há»c
+const getProductsByCategory = async (categoryCode, brandCode) => {
   const result = await db.query(
-    `SELECT id, location_code FROM locations 
+    `SELECT * FROM products WHERE category_code = $1 AND brand_code = $2 ORDER BY id`,
+    [categoryCode, brandCode]
+  );
+  return result.rows;
+};
+
+const getProductBySKU = async (sku) => {
+  const result = await db.query('SELECT * FROM products WHERE sku = $1', [sku]);
+  return result.rows[0];
+};
+
+// ============================================
+// TÃŒM KIáº¾M Vá»Š TRÃ BIN TRá»NG
+// ============================================
+
+/**
+ * TÃ¬m cÃ¡c Bin trá»‘ng trong Ä‘Ãºng Khu vá»±c (Zone)
+ * Æ¯u tiÃªn xáº¿p: Táº§ng tháº¥p â†’ Táº§ng cao, Ká»‡ gáº§n â†’ Ká»‡ xa (theo lá»‘i Ä‘i xe nÃ¢ng)
+ * Äá»‹nh dáº¡ng: TV-SN-A1-R1-S1-B1 (Zone-Aisle-Rack-Shelf-Bin)
+ */
+const getEmptyBinsByZone = async (zoneCode, neededQty) => {
+  const result = await db.query(
+    `SELECT id, location_code, aisle, rack, shelf, bin 
+     FROM locations 
      WHERE zone_code = $1 AND status = 'EMPTY' 
-     ORDER BY aisle, rack, shelf, bin LIMIT $2`,
+     ORDER BY aisle ASC, rack ASC, shelf ASC, bin ASC 
+     LIMIT $2`,
     [zoneCode, neededQty]
   );
   return result.rows;
 };
 
-// Thá»±c hiá»‡n lÆ°u Phiáº¿u nháº­p vÃ  cáº¥t hÃ ng vÃ o Bin
-const executeInbound = async (userId, receiptCode, productDetails) => {
-  // 1. Táº¡o tá» Phiáº¿u Nháº­p
-  const receiptRes = await db.query(
-    `INSERT INTO inbound_receipts (receipt_code, user_id) VALUES ($1, $2) RETURNING id`,
-    [receiptCode, userId]
+/**
+ * Láº¥y táº¥t cáº£ Bin trá»‘ng trong kho (Ä‘á»ƒ xem tá»•ng quan)
+ */
+const getAllEmptyBins = async () => {
+  const result = await db.query(
+    `SELECT id, location_code, zone_code, aisle, rack, shelf, bin 
+     FROM locations 
+     WHERE status = 'EMPTY' 
+     ORDER BY zone_code, aisle, rack, shelf, bin`
   );
-  const receiptId = receiptRes.rows[0].id;
-
-  // 2. Äi cáº¥t tá»«ng mÃ³n hÃ ng vÃ o Bin
-  for (let item of productDetails) {
-    for (let bin of item.bins) {
-      // Äá»•i tráº¡ng thÃ¡i Bin thÃ nh ÄÃƒ Äáº¦Y vÃ  ghi tÃªn sáº£n pháº©m vÃ o
-      await db.query(
-        `UPDATE locations SET status = 'FULL', product_id = $1, current_qty = 1 WHERE id = $2`,
-        [item.productId, bin.id]
-      );
-      
-      // Ghi dÃ²ng chi tiáº¿t vÃ o Phiáº¿u Nháº­p
-      await db.query(
-        `INSERT INTO inbound_details (receipt_id, product_id, location_id, quantity) VALUES ($1, $2, $3, 1)`,
-        [receiptId, item.productId, bin.id]
-      );
-    }
-  }
-  return receiptId;
+  return result.rows;
 };
 
-module.exports = { getProductInfo, getEmptyBins, executeInbound };
+/**
+ * Äáº¿m sá»‘ Bin trá»‘ng cÃ²n láº¡i trong má»—i khu vá»±c
+ */
+const getEmptyBinCountByZone = async () => {
+  const result = await db.query(
+    `SELECT zone_code, COUNT(*) as empty_count 
+     FROM locations 
+     WHERE status = 'EMPTY' 
+     GROUP BY zone_code 
+     ORDER BY zone_code`
+  );
+  return result.rows;
+};
+
+// ============================================
+// QUáº¢N LÃ PHIáº¾U NHáº¬P KHO
+// ============================================
+
+/**
+ * Táº¡o má»›i má»™t Phiáº¿u Nháº­p kho
+ * Cáº¥u trÃºc báº£ng thá»±c táº¿: id, receipt_code, user_id, status, created_at
+ */
+const createInboundReceipt = async (receiptCode, userId) => {
+  const result = await db.query(
+    `INSERT INTO inbound_receipts (receipt_code, user_id, status, created_at) 
+     VALUES ($1, $2, 'PENDING', NOW()) 
+     RETURNING id`,
+    [receiptCode, userId]
+  );
+  return result.rows[0].id;
+};
+
+/**
+ * ThÃªm chi tiáº¿t phiáº¿u nháº­p (1 dÃ²ng = 1 sáº£n pháº©m táº¡i 1 vá»‹ trÃ­)
+ * Cáº¥u trÃºc báº£ng thá»±c táº¿: id, receipt_id, product_id, location_id, quantity
+ */
+const addInboundDetail = async (receiptId, productId, locationId, quantity) => {
+  const result = await db.query(
+    `INSERT INTO inbound_details (receipt_id, product_id, location_id, quantity) 
+     VALUES ($1, $2, $3, $4) 
+     RETURNING id`,
+    [receiptId, productId, locationId, quantity]
+  );
+  return result.rows[0].id;
+};
+
+/**
+ * Cáº­p nháº­t tá»“n kho (tÄƒng sá»‘ lÆ°á»£ng)
+ * Sá»­ dá»¥ng ON CONFLICT Ä‘á»ƒ upsert - náº¿u Ä‘Ã£ cÃ³ record thÃ¬ cá»™ng thÃªm, chÆ°a cÃ³ thÃ¬ táº¡o má»›i
+ */
+const updateInventory = async (productId, warehouseId, quantityToAdd) => {
+  const result = await db.query(
+    `INSERT INTO inventory (product_id, warehouse_id, quantity) 
+     VALUES ($1, $2, $3)
+     ON CONFLICT (product_id, warehouse_id) 
+     DO UPDATE SET quantity = inventory.quantity + $3
+     RETURNING quantity`,
+    [productId, warehouseId, quantityToAdd]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Cáº­p nháº­t tráº¡ng thÃ¡i Bin: ÄÃNH Dáº¤U Äáº¦Y + ghi sáº£n pháº©m vÃ o
+ */
+const occupyBin = async (locationId, productId, quantity) => {
+  await db.query(
+    `UPDATE locations 
+     SET status = 'FULL', product_id = $1, current_qty = $2 
+     WHERE id = $3`,
+    [productId, quantity, locationId]
+  );
+};
+
+/**
+ * Láº¥y danh sÃ¡ch táº¥t cáº£ phiáº¿u nháº­p kho (cÃ³ phÃ¢n trang)
+ * Cáº¥u trÃºc báº£ng thá»±c táº¿: id, receipt_code, user_id, status, created_at
+ */
+const getAllInboundReceipts = async (limit = 50, offset = 0) => {
+  const result = await db.query(
+    `SELECT ir.id, ir.receipt_code, ir.user_id, ir.status, ir.created_at,
+            u.full_name as user_name, u.role as user_role
+     FROM inbound_receipts ir
+     LEFT JOIN users u ON ir.user_id = u.id
+     ORDER BY ir.created_at DESC
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+  return result.rows;
+};
+
+/**
+ * Láº¥y chi tiáº¿t 1 phiáº¿u nháº­p (bao gá»“m cÃ¡c dÃ²ng sáº£n pháº©m)
+ */
+const getInboundReceiptDetails = async (receiptId) => {
+  const result = await db.query(
+    `SELECT id_item.id as detail_id, id_item.receipt_id, id_item.product_id, id_item.location_id, 
+            id_item.quantity,
+            p.sku, p.name AS productName, p.category_code, p.brand_code,
+            l.location_code AS locationCode, l.zone_code AS zoneCode, l.aisle, l.rack, l.shelf, l.bin
+     FROM inbound_details id_item
+     JOIN products p ON id_item.product_id = p.id
+     JOIN locations l ON id_item.location_id = l.id
+     WHERE id_item.receipt_id = $1
+     ORDER BY l.zone_code, l.aisle, l.rack, l.shelf, l.bin`,
+    [receiptId]
+  );
+  return result.rows;
+};
+
+/**
+ * Cáº­p nháº­t tráº¡ng thÃ¡i phiáº¿u nháº­p (PENDING â†’ APPROVED / REJECTED)
+ */
+const updateReceiptStatus = async (receiptId, newStatus) => {
+  await db.query(
+    `UPDATE inbound_receipts SET status = $1 WHERE id = $2`,
+    [newStatus, receiptId]
+  );
+};
+
+/**
+ * Láº¥y 1 phiáº¿u nháº­p theo ID
+ */
+const getInboundReceiptById = async (receiptId) => {
+  const result = await db.query(
+    `SELECT ir.*, u.full_name as user_name
+     FROM inbound_receipts ir
+     LEFT JOIN users u ON ir.user_id = u.id
+     WHERE ir.id = $1`,
+    [receiptId]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Äáº¿m tá»•ng sá»‘ phiáº¿u nháº­p (Ä‘á»ƒ phÃ¢n trang)
+ */
+const countInboundReceipts = async () => {
+  const result = await db.query('SELECT COUNT(*) as total FROM inbound_receipts');
+  return parseInt(result.rows[0].total);
+};
+
+/**
+ * Táº¡o mÃ£ phiáº¿u nháº­p tá»± Ä‘á»™ng: PN-YYYYMMDD-XXXX
+ */
+const generateReceiptCode = async () => {
+  const date = new Date();
+  const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  
+  // Äáº¿m sá»‘ phiáº¿u trong ngÃ y Ä‘á»ƒ táº¡o sá»‘ thá»© tá»±
+  const countResult = await db.query(
+    `SELECT COUNT(*) as count FROM inbound_receipts 
+     WHERE receipt_code LIKE $1`,
+    [`PN-${dateString}-%`]
+  );
+  
+  const sequence = (parseInt(countResult.rows[0].count) + 1).toString().padStart(4, '0');
+  return `PN-${dateString}-${sequence}`;
+};
+
+module.exports = {
+  // Product queries
+  getProductInfo,
+  getProductsByCategory,
+  getProductBySKU,
+  
+  // Location queries
+  getEmptyBinsByZone,
+  getAllEmptyBins,
+  getEmptyBinCountByZone,
+  
+  // Inventory operations
+  updateInventory,
+  occupyBin,
+  
+  // Receipt operations
+  createInboundReceipt,
+  addInboundDetail,
+  getAllInboundReceipts,
+  getInboundReceiptDetails,
+  getInboundReceiptById,
+  updateReceiptStatus,
+  countInboundReceipts,
+  generateReceiptCode
+};
+
 </file>
 <file name="inventoryModel.js">
 const db = require('./db');
@@ -563,8 +928,7 @@ const createProduct = async (sku, name, category, brand, size, type, unit, price
     INSERT INTO products (sku, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
   `;
-  const result = await db.query(query, [sku, name, category, brand, size, type, unit, price, img]);
-  return result.rows[0];
+  return await db.query(query, [sku, name, category, brand, size, type, unit, price, img]);
 };
 
 // Láº¥y danh sÃ¡ch sáº£n pháº©m kÃ¨m tá»“n kho
@@ -593,7 +957,6 @@ const updateProduct = async (id, name, category, brand, size, type, unit, price,
 
 // Cáº­p nháº­t tá»“n kho
 const updateInventory = async (product_id, warehouse_id, quantity) => {
-  // Upsert: update náº¿u Ä‘Ã£ tá»“n táº¡i, insert náº¿u chÆ°a cÃ³
   const query = `
     INSERT INTO inventory (product_id, warehouse_id, quantity)
     VALUES ($1, $2, $3)
@@ -601,8 +964,7 @@ const updateInventory = async (product_id, warehouse_id, quantity) => {
     DO UPDATE SET quantity = $3, updated_at = NOW()
     RETURNING *;
   `;
-  const result = await db.query(query, [product_id, warehouse_id, quantity]);
-  return result.rows[0];
+  return await db.query(query, [product_id, warehouse_id, quantity]);
 };
 
 // XÃ³a sáº£n pháº©m
@@ -682,10 +1044,77 @@ module.exports = router;
 const express = require('express');
 const router = express.Router();
 const inboundController = require('../controllers/inboundController');
+const { verifyToken, requireRoles } = require('../middlewares/authMiddleware');
 
-router.post('/', inboundController.handleInbound);
+// ============================================
+// ROUTES PHIáº¾U NHáº¬P KHO
+// ============================================
+
+/**
+ * POST /api/inbound
+ * Táº¡o phiáº¿u nháº­p kho má»›i
+ * Quyá»n: ADMIN, KHO (nhÃ¢n viÃªn kho)
+ */
+router.post('/', 
+  verifyToken, 
+  requireRoles(['ADMIN', 'KHO']), 
+  inboundController.handleInbound
+);
+
+/**
+ * GET /api/inbound
+ * Láº¥y danh sÃ¡ch phiáº¿u nháº­p kho (cÃ³ phÃ¢n trang)
+ * Quyá»n: Táº¥t cáº£ Ä‘Ã£ Ä‘Äƒng nháº­p
+ */
+router.get('/', 
+  verifyToken, 
+  inboundController.getInboundReceipts
+);
+
+/**
+ * GET /api/inbound/warehouse-overview
+ * Láº¥y tá»•ng quan tráº¡ng thÃ¡i cÃ¡c khu vá»±c trong kho
+ * Quyá»n: Táº¥t cáº£ Ä‘Ã£ Ä‘Äƒng nháº­p
+ */
+router.get('/warehouse-overview', 
+  verifyToken, 
+  inboundController.getWarehouseOverview
+);
+
+/**
+ * GET /api/inbound/:id
+ * Láº¥y chi tiáº¿t 1 phiáº¿u nháº­p kho
+ * Quyá»n: Táº¥t cáº£ Ä‘Ã£ Ä‘Äƒng nháº­p
+ */
+router.get('/:id', 
+  verifyToken, 
+  inboundController.getInboundReceiptById
+);
+
+/**
+ * POST /api/inbound/suggest-bins
+ * Gá»£i Ã½ vá»‹ trÃ­ Bin trá»‘ng cho sáº£n pháº©m
+ * Quyá»n: ADMIN, KHO
+ */
+router.post('/suggest-bins', 
+  verifyToken, 
+  requireRoles(['ADMIN', 'KHO']), 
+  inboundController.suggestBins
+);
+
+/**
+ * PUT /api/inbound/:id/approve
+ * Duyá»‡t hoáº·c tá»« chá»‘i phiáº¿u nháº­p kho
+ * Quyá»n: ADMIN, KHO (quáº£n lÃ½ kho)
+ */
+router.put('/:id/approve', 
+  verifyToken, 
+  requireRoles(['ADMIN', 'KHO']), 
+  inboundController.approveInbound
+);
 
 module.exports = router;
+
 </file>
 <file name="inventoryRoutes.js">
 const express = require('express');
@@ -872,42 +1301,298 @@ module.exports = { requestShipment, authorizeShipment, scanItem };
 <file name="inboundService.js">
 const inboundModel = require('../models/inboundModel');
 
+// ============================================
+// NGHIá»†P Vá»¤ Táº O PHIáº¾U NHáº¬P KHO
+// ============================================
+
+/**
+ * Táº¡o phiáº¿u nháº­p kho má»›i
+ * @param {number} userId - ID ngÆ°á»i táº¡o phiáº¿u
+ * @param {Array} items - Danh sÃ¡ch sáº£n pháº©m: [{ productId, quantity }]
+ * @returns {Object} ThÃ´ng tin phiáº¿u nháº­p
+ */
 const createInboundReceipt = async (userId, items) => {
-  let productDetails = [];
+  // BÆ°á»›c 1: Validate dá»¯ liá»‡u Ä‘áº§u vÃ o
+  if (!items || items.length === 0) {
+    throw new Error('Danh sÃ¡ch sáº£n pháº©m trá»‘ng!');
+  }
 
-  // BÆ¯á»šC 1: Kiá»ƒm tra sá»©c chá»©a trÆ°á»›c khi cho xe táº£i vÃ o kho
+  // BÆ°á»›c 2: Xá»­ lÃ½ tá»«ng sáº£n pháº©m - gá»£i Ã½ vá»‹ trÃ­
+  const processedItems = [];
+  
   for (let item of items) {
+    // Láº¥y thÃ´ng tin sáº£n pháº©m
     const product = await inboundModel.getProductInfo(item.productId);
-    if (!product) throw new Error(`KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m ID ${item.productId}`);
-
-    const zoneCode = `${product.category_code}-${product.brand_code}`;
-    const emptyBins = await inboundModel.getEmptyBins(zoneCode, item.quantity);
-
-    // Náº¿u sá»‘ Bin trá»‘ng Ã­t hÆ¡n sá»‘ hÃ ng mang tá»›i -> Äuá»•i vá»!
-    if (emptyBins.length < item.quantity) {
-      throw new Error(`Khu vá»±c ${zoneCode} bá»‹ Ä‘áº§y! Chá»‰ cÃ²n ${emptyBins.length} vá»‹ trÃ­ trá»‘ng, khÃ´ng Ä‘á»§ chá»©a ${item.quantity} sáº£n pháº©m!`);
+    if (!product) {
+      throw new Error(`KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m ID ${item.productId}`);
     }
 
-    productDetails.push({
+    // XÃ¡c Ä‘á»‹nh Zone dá»±a trÃªn category vÃ  brand
+    const zoneCode = `${product.category_code}-${product.brand_code}`;
+    
+    // Tá»± Ä‘á»™ng gá»£i Ã½ cÃ¡c Bin trá»‘ng
+    const emptyBins = await inboundModel.getEmptyBinsByZone(zoneCode, item.quantity);
+    
+    // Kiá»ƒm tra Ä‘á»§ vá»‹ trÃ­ khÃ´ng
+    if (emptyBins.length < item.quantity) {
+      const available = emptyBins.length;
+      throw new Error(
+        `Khu vá»±c "${zoneCode}" (${product.category_code === 'TV' ? 'Tivi' : 
+          product.category_code === 'TL' ? 'Tá»§ láº¡nh' : 
+          product.category_code === 'MG' ? 'MÃ¡y giáº·t' : 'MÃ¡y láº¡nh'} ${product.brand_code}) ` +
+        `chá»‰ cÃ²n ${available} vá»‹ trÃ­ trá»‘ng, khÃ´ng Ä‘á»§ cho ${item.quantity} sáº£n pháº©m!`
+      );
+    }
+
+    processedItems.push({
       productId: item.productId,
       quantity: item.quantity,
-      bins: emptyBins // Danh sÃ¡ch cÃ¡c Bin sáº½ Ä‘Æ°á»£c dÃ¹ng Ä‘á»ƒ cáº¥t hÃ ng
+      suggestedBins: emptyBins,
+      zoneCode: zoneCode,
+      productName: product.name,
+      sku: product.sku
     });
   }
 
-  // BÆ¯á»šC 2: Táº¡o mÃ£ phiáº¿u tá»± Ä‘á»™ng (VD: PN-20260620-1234)
-  const date = new Date();
-  const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
-  const receiptCode = `PN-${dateString}-${randomNum}`;
+  // BÆ°á»›c 3: Táº¡o mÃ£ phiáº¿u nháº­p tá»± Ä‘á»™ng
+  const receiptCode = await inboundModel.generateReceiptCode();
 
-  // BÆ¯á»šC 3: Ra lá»‡nh cho Thá»§ kho lÆ°u dá»¯ liá»‡u
-  await inboundModel.executeInbound(userId, receiptCode, productDetails);
+  // BÆ°á»›c 4: Táº¡o phiáº¿u nháº­p trong database
+  const receiptId = await inboundModel.createInboundReceipt(receiptCode, userId);
+
+  // BÆ°á»›c 5: Xá»­ lÃ½ tá»«ng sáº£n pháº©m - lÆ°u chi tiáº¿t + cáº­p nháº­t inventory
+  const receiptDetails = [];
   
-  return { receiptCode, details: productDetails };
+  for (let item of processedItems) {
+    for (let i = 0; i < item.quantity; i++) {
+      const bin = item.suggestedBins[i];
+      
+      // LÆ°u chi tiáº¿t phiáº¿u nháº­p
+      await inboundModel.addInboundDetail(receiptId, item.productId, bin.id, 1);
+      
+      // Cáº­p nháº­t tráº¡ng thÃ¡i Bin: ÄÃNH Dáº¤U Äáº¦Y
+      await inboundModel.occupyBin(bin.id, item.productId, 1);
+      
+      // Cáº­p nháº­t tá»“n kho tá»•ng (warehouse_id = 1 lÃ  kho máº·c Ä‘á»‹nh)
+      await inboundModel.updateInventory(item.productId, 1, 1);
+      
+      receiptDetails.push({
+        sku: item.sku,
+        productName: item.productName,
+        locationCode: bin.location_code,
+        quantity: 1,
+        zoneCode: item.zoneCode
+      });
+    }
+  }
+
+  return {
+    receiptId,
+    receiptCode,
+    totalProducts: items.reduce((sum, i) => sum + i.quantity, 0),
+    totalItems: processedItems.length,
+    details: receiptDetails,
+    createdAt: new Date()
+  };
 };
 
-module.exports = { createInboundReceipt };
+// ============================================
+// NGHIá»†P Vá»¤ Gá»¢I Ã Vá»Š TRÃ BIN
+// ============================================
+
+/**
+ * Gá»£i Ã½ vá»‹ trÃ­ Bin trá»‘ng tá»‘i Æ°u cho má»™t sáº£n pháº©m
+ * @param {number} productId - ID sáº£n pháº©m
+ * @param {number} quantity - Sá»‘ lÆ°á»£ng cáº§n nháº­p
+ * @returns {Object} ThÃ´ng tin gá»£i Ã½
+ */
+const suggestBinLocations = async (productId, quantity) => {
+  const product = await inboundModel.getProductInfo(productId);
+  if (!product) {
+    throw new Error('KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m');
+  }
+
+  const zoneCode = `${product.category_code}-${product.brand_code}`;
+  const emptyBins = await inboundModel.getEmptyBinsByZone(zoneCode, quantity);
+
+  if (emptyBins.length < quantity) {
+    return {
+      success: false,
+      message: `Khu vá»±c ${zoneCode} chá»‰ cÃ²n ${emptyBins.length} vá»‹ trÃ­ trá»‘ng`,
+      available: emptyBins.length,
+      suggestedBins: emptyBins,
+      zoneCode
+    };
+  }
+
+  return {
+    success: true,
+    productId,
+    productName: product.name,
+    sku: product.sku,
+    zoneCode,
+    zoneName: getZoneName(zoneCode),
+    quantity,
+    suggestedBins: emptyBins.slice(0, quantity),
+    message: `Gá»£i Ã½ ${quantity} vá»‹ trÃ­ trong khu ${getZoneName(zoneCode)}`
+  };
+};
+
+/**
+ * Láº¥y tá»•ng quan tÃ¬nh tráº¡ng cÃ¡c khu vá»±c kho
+ */
+const getWarehouseOverview = async () => {
+  const emptyBinCounts = await inboundModel.getEmptyBinCountByZone();
+
+  // Äá»‹nh dáº¡ng káº¿t quáº£ theo category
+  const overview = {
+    TV: { name: 'Tivi', zones: {} },
+    TL: { name: 'Tá»§ Láº¡nh', zones: {} },
+    MG: { name: 'MÃ¡y Giáº·t', zones: {} },
+    ML: { name: 'MÃ¡y Láº¡nh', zones: {} }
+  };
+
+  emptyBinCounts.forEach(row => {
+    const [category, brand] = [row.zone_code.substring(0, 2), row.zone_code.substring(3)];
+    if (overview[category]) {
+      overview[category].zones[brand] = {
+        zoneCode: row.zone_code,
+        emptyCount: parseInt(row.empty_count),
+        zoneName: getZoneName(row.zone_code)
+      };
+    }
+  });
+
+  return overview;
+};
+
+// ============================================
+// NGHIá»†P Vá»¤ XEM & DUYá»†T PHIáº¾U NHáº¬P
+// ============================================
+
+/**
+ * Láº¥y danh sÃ¡ch phiáº¿u nháº­p kho (cÃ³ phÃ¢n trang)
+ */
+const getInboundReceipts = async (page = 1, limit = 20) => {
+  const offset = (page - 1) * limit;
+  const receipts = await inboundModel.getAllInboundReceipts(limit, offset);
+  const total = await inboundModel.countInboundReceipts();
+
+  return {
+    receipts,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
+};
+
+/**
+ * Láº¥y chi tiáº¿t má»™t phiáº¿u nháº­p
+ */
+const getReceiptDetails = async (receiptId) => {
+  const receipt = await inboundModel.getInboundReceiptById(receiptId);
+  if (!receipt) {
+    throw new Error('KhÃ´ng tÃ¬m tháº¥y phiáº¿u nháº­p');
+  }
+
+  const details = await inboundModel.getInboundReceiptDetails(receiptId);
+
+  // NhÃ³m chi tiáº¿t theo Zone Ä‘á»ƒ hiá»ƒn thá»‹ Ä‘áº¹p hÆ¡n
+  const groupedByZone = {};
+  details.forEach(d => {
+    if (!groupedByZone[d.zone_code]) {
+      groupedByZone[d.zone_code] = {
+        zoneCode: d.zone_code,
+        zoneName: getZoneName(d.zone_code),
+        items: [],
+        totalQty: 0
+      };
+    }
+    groupedByZone[d.zone_code].items.push(d);
+    groupedByZone[d.zone_code].totalQty += d.quantity;
+  });
+
+  return {
+    ...receipt,
+    details,
+    groupedByZone: Object.values(groupedByZone),
+    totalProducts: details.reduce((sum, d) => sum + d.quantity, 0)
+  };
+};
+
+/**
+ * Duyá»‡t/Tá»« chá»‘i phiáº¿u nháº­p kho
+ */
+const approveReceipt = async (receiptId, action) => {
+  const receipt = await inboundModel.getInboundReceiptById(receiptId);
+  if (!receipt) {
+    throw new Error('KhÃ´ng tÃ¬m tháº¥y phiáº¿u nháº­p');
+  }
+
+  if (receipt.status !== 'PENDING') {
+    throw new Error(`Phiáº¿u Ä‘ang á»Ÿ tráº¡ng thÃ¡i "${receipt.status}", khÃ´ng thá»ƒ duyá»‡t!`);
+  }
+
+  const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
+  await inboundModel.updateReceiptStatus(receiptId, newStatus);
+
+  return {
+    receiptId,
+    receiptCode: receipt.receipt_code,
+    newStatus,
+    message: action === 'approve' 
+      ? `ÄÃ£ duyá»‡t phiáº¿u ${receipt.receipt_code}` 
+      : `ÄÃ£ tá»« chá»‘i phiáº¿u ${receipt.receipt_code}`
+  };
+};
+
+// ============================================
+// HÃ€M Há»– TRá»¢
+// ============================================
+
+/**
+ * Chuyá»ƒn Zone Code thÃ nh tÃªn hiá»ƒn thá»‹
+ */
+const getZoneName = (zoneCode) => {
+  const categoryNames = {
+    'TV': 'Tivi',
+    'TL': 'Tá»§ Láº¡nh',
+    'MG': 'MÃ¡y Giáº·t',
+    'ML': 'MÃ¡y Láº¡nh'
+  };
+
+  const brandNames = {
+    'SN': 'Sony',
+    'SS': 'Samsung',
+    'LG': 'LG',
+    'TC': 'TCL',
+    'PNS': 'Panasonic',
+    'AQ': 'Aqua',
+    'TSB': 'Toshiba',
+    'HTC': 'Hitachi',
+    'EL': 'Electrolux',
+    'DK': 'Daikin',
+    'CP': 'Casper',
+    'SP': 'Sharp'
+  };
+
+  const [cat, brand] = [zoneCode.substring(0, 2), zoneCode.substring(3)];
+  return `${categoryNames[cat] || cat} ${brandNames[brand] || brand}`;
+};
+
+module.exports = {
+  createInboundReceipt,
+  suggestBinLocations,
+  getWarehouseOverview,
+  getInboundReceipts,
+  getReceiptDetails,
+  approveReceipt,
+  getZoneName
+};
+
 </file>
 <file name="inventoryService.js">
 const inventoryModel = require('../models/inventoryModel');
@@ -995,6 +1680,7 @@ module.exports = { createOutboundReceipt };
 </file>
 <file name="productService.js">
 const productModel = require('../models/productModel');
+const db = require('../models/db');
 
 const addProduct = async (data) => {
   const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, inventory, warehouse_id } = data;
@@ -1039,6 +1725,18 @@ const editProduct = async (id, data) => {
 };
 
 const removeProduct = async (id) => {
+  // 1. Kiá»ƒm tra tá»“n kho trÆ°á»›c khi xÃ³a
+  const result = await db.query('SELECT quantity FROM inventory WHERE product_id = $1', [id]);
+  const totalStock = result.rows.reduce((sum, row) => sum + row.quantity, 0);
+
+  if (totalStock > 0) {
+    throw new Error('KhÃ´ng thá»ƒ xÃ³a: Sáº£n pháº©m váº«n cÃ²n tá»“n kho trong Ã­t nháº¥t má»™t kho!');
+  }
+
+  // 2. Náº¿u tá»“n kho = 0, thÃ¬ xÃ³a dá»¯ liá»‡u liÃªn quan á»Ÿ báº£ng inventory trÆ°á»›c
+  await db.query('DELETE FROM inventory WHERE product_id = $1', [id]);
+
+  // 3. XÃ³a sáº£n pháº©m
   await productModel.deleteProduct(id);
 };
 
