@@ -16,9 +16,15 @@ const createProduct = async (sku, name, category, brand, size, type, unit, price
   return result.rows[0];
 };
 
-// Lấy danh sách
+// Lấy danh sách sản phẩm kèm tồn kho
 const getAllProducts = async () => {
-  const result = await db.query('SELECT * FROM products ORDER BY id DESC');
+  const result = await db.query(`
+    SELECT p.*, COALESCE(SUM(i.quantity), 0) as inventory
+    FROM products p
+    LEFT JOIN inventory i ON p.id = i.product_id
+    GROUP BY p.id
+    ORDER BY p.id DESC
+  `);
   return result.rows;
 };
 
@@ -34,9 +40,23 @@ const updateProduct = async (id, name, category, brand, size, type, unit, price,
   return result.rows[0];
 };
 
+// Cập nhật tồn kho
+const updateInventory = async (product_id, warehouse_id, quantity) => {
+  // Upsert: update nếu đã tồn tại, insert nếu chưa có
+  const query = `
+    INSERT INTO inventory (product_id, warehouse_id, quantity)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (product_id, warehouse_id) 
+    DO UPDATE SET quantity = $3, updated_at = NOW()
+    RETURNING *;
+  `;
+  const result = await db.query(query, [product_id, warehouse_id, quantity]);
+  return result.rows[0];
+};
+
 // Xóa sản phẩm
 const deleteProduct = async (id) => {
   await db.query('DELETE FROM products WHERE id = $1', [id]);
 };
 
-module.exports = { countProductsByPrefix, createProduct, getAllProducts, updateProduct, deleteProduct };
+module.exports = { countProductsByPrefix, createProduct, getAllProducts, updateProduct, updateInventory, deleteProduct };
