@@ -3,6 +3,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout'; // Kéo Layout vừa tạo vào
 import Warehouse from './pages/Warehouse';
+import Products from './pages/Products';
+
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
