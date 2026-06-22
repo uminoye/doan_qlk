@@ -4,22 +4,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Khai báo kết nối Database (đã cập nhật đường dẫn vào thư mục models)
 const db = require('./src/models/db');
 
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// ==========================================
-// NHÚNG CÁC ROUTER (PHÒNG TIẾP TÂN MỚI)
-// ==========================================
-// Gọi phòng Tiếp tân của Sản phẩm ra làm việc
+// Routes Configuration
 const productRoutes = require('./src/routes/productRoutes');
 app.use('/api/products', productRoutes);
 
-// Kéo Tiếp tân quản lý Kho ra làm việc
 const locationRoutes = require('./src/routes/locationRoutes');
 app.use('/api/locations', locationRoutes);
 
@@ -35,7 +31,6 @@ app.use('/api/outbound', outboundRoutes);
 const factoryRoutes = require('./src/routes/factoryRoutes');
 app.use('/api/factory', factoryRoutes);
 
-// Khai báo đường dẫn cho Phòng Sales và Khách Hàng
 const customerRoutes = require('./src/routes/customerRoutes');
 app.use('/api/customers', customerRoutes);
 
@@ -45,22 +40,18 @@ app.use('/api/sales', salesRoutes);
 const authRoutes = require('./src/routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// ==========================================
-// API FIX MẬT KHẨU (Tạm thời để ở đây, mốt rảnh dời sau)
-// ==========================================
+// Development APIs
 app.get('/api/setup', async (req, res) => {
   try {
     const hash = await bcrypt.hash('123456', 10);
-    await db.query("UPDATE users SET password_hash = $1 WHERE username = 'admin'", [hash]);
-    res.send(`<h2>✅ Đã cập nhật lại mật khẩu admin thành: 123456</h2><p>Mã băm mới trong DB là: ${hash}</p>`);
+    // Update default password for all users
+    await db.query("UPDATE users SET password_hash = $1", [hash]);
+    res.send(`<h2>✅ Cập nhật mật khẩu hệ thống thành công.</h2><p>Mã băm: ${hash}</p>`);
   } catch (error) {
-    res.send('❌ Lỗi: ' + error.message);
+    res.status(500).send('❌ Lỗi hệ thống: ' + error.message);
   }
 });
 
-// ==========================================
-// API ĐĂNG NHẬP (Tạm thời để ở đây, mốt rảnh dời sau)
-// ==========================================
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -79,7 +70,7 @@ app.post('/api/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'DoAn_WMS_Secret_2026',
       { expiresIn: '1d' }
     );
 
@@ -97,19 +88,15 @@ app.post('/api/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Lỗi đăng nhập:', error);
+    console.error('Login Error:', error);
     res.status(500).json({ success: false, message: 'Lỗi máy chủ!' });
   }
 });
 
-
-
-// ==========================================
-// KHỞI ĐỘNG MÁY CHỦ
-// ==========================================
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`=========================================`);
-  console.log(`🚀 Bắt đầu chạy Backend tại cổng ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`=========================================`);
 });
