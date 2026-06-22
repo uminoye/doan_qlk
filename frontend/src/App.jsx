@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Layout from './components/Layout'; // Kéo Layout vừa tạo vào
+import Layout from './components/Layout'; 
 import Warehouse from './pages/Warehouse';
 import Products from './pages/Products';
 import Inbound from './pages/Inbound';
-
+import Sales from './pages/Sales';
+import Customers from './pages/Customers'; // 1. IMPORT FILE KHÁCH HÀNG VÀO ĐÂY
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -24,6 +25,8 @@ function App() {
           <Route path="/warehouse" element={<Warehouse />} />
           <Route path="/products" element={<Products />} />
           <Route path="/inbound" element={<Inbound />} />
+          <Route path="/sales" element={<Sales />} />
+          <Route path="/customers" element={<Customers />} /> {/* 2. KHAI BÁO TUYẾN ĐƯỜNG KHÁCH HÀNG Ở ĐÂY */}
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />

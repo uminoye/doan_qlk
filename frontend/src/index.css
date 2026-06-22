@@ -1,14 +1,31 @@
+/* Tẩy trắng toàn bộ lề thừa và viền mặc định */
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
+/* Ép khung web tràn 100% màn hình, không bị cuộn ngang/dọc dư thừa */
 html, body, #root {
-  width: 100%;
+  width: 100vw;
   height: 100vh;
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f0f2f5;
+  overflow: hidden; /* Khóa thanh cuộn tổng để xử lý cuộn bên trong Layout */
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f8fafc;
+}
+
+/* Tùy chỉnh thanh cuộn (Scrollbar) cho đẹp mắt */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

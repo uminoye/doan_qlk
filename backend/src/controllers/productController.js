@@ -29,13 +29,14 @@ const updateProduct = async (req, res) => {
   }
 };
 
+// Đã sửa lại hàm này
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
     await productService.removeProduct(id);
-    res.json({ success: true, message: 'Đã xóa sản phẩm khỏi kho!' });
+    res.json({ success: true, message: 'Đã xóa sản phẩm và dọn sạch lịch sử giao dịch!' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Lỗi khi xóa! Có thể sản phẩm này đang có tồn kho.' });
+    res.status(500).json({ success: false, message: 'Lỗi khi xóa: ' + error.message });
   }
 };
 

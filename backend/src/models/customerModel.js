@@ -9,4 +9,9 @@ const addCustomer = async (customerCode, name, phone, address) => {
   return result.rows[0];
 };
 
-module.exports = { addCustomer };
+const getAllCustomers = async () => {
+  const result = await db.query('SELECT * FROM customers ORDER BY id DESC');
+  return result.rows;
+};
+
+module.exports = { addCustomer, getAllCustomers };

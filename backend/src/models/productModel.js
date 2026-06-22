@@ -53,7 +53,27 @@ const updateInventory = async (product_id, warehouse_id, quantity) => {
 
 // Xóa sản phẩm
 const deleteProduct = async (id) => {
-  await db.query('DELETE FROM products WHERE id = $1', [id]);
+  try {
+    // 1. Dọn dẹp bảng Tồn kho (inventory)
+    try { await db.query('DELETE FROM inventory WHERE product_id = $1', [id]); } catch (e) { console.log('Bỏ qua inventory'); }
+
+    // 2. Dọn dẹp chi tiết phiếu nhập (inbound_details)
+    try { await db.query('DELETE FROM inbound_details WHERE product_id = $1', [id]); } catch (e) { console.log('Bỏ qua inbound'); }
+
+    // 3. Dọn dẹp chi tiết phiếu xuất (outbound_details)
+    try { await db.query('DELETE FROM outbound_details WHERE product_id = $1', [id]); } catch (e) { console.log('Bỏ qua outbound'); }
+
+    // 4. Dọn dẹp chi tiết đơn hàng kinh doanh (sales_order_details)
+    try { await db.query('DELETE FROM sales_order_details WHERE product_id = $1', [id]); } catch (e) { console.log('Bỏ qua sales'); }
+
+    // 5. Cuối cùng, khi rễ đã đứt hết, tiến hành nhổ cây (Xóa sản phẩm)
+    const result = await db.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
+    
+    // Nếu rowCount > 0 tức là đã xóa thành công
+    return result.rowCount > 0;
+  } catch (error) {
+    throw new Error('Lỗi Database khi dọn dẹp sản phẩm: ' + error.message);
+  }
 };
 
 module.exports = { countProductsByPrefix, createProduct, getAllProducts, updateProduct, updateInventory, deleteProduct };

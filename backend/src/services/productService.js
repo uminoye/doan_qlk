@@ -44,19 +44,29 @@ const editProduct = async (id, data) => {
 };
 
 const removeProduct = async (id) => {
-  // 1. Kiểm tra tồn kho trước khi xóa
-  const result = await db.query('SELECT quantity FROM inventory WHERE product_id = $1', [id]);
-  const totalStock = result.rows.reduce((sum, row) => sum + row.quantity, 0);
+  try {
+    // 1. Dọn dẹp bảng Tồn kho (Dùng try-catch để lỡ thiếu bảng web cũng không bị sập)
+    try { await db.query('DELETE FROM inventory WHERE product_id = $1', [id]); } catch (e) {}
 
-  if (totalStock > 0) {
-    throw new Error('Không thể xóa: Sản phẩm vẫn còn tồn kho trong ít nhất một kho!');
+    // 2. Dọn dẹp chi tiết phiếu nhập
+    try { await db.query('DELETE FROM inbound_details WHERE product_id = $1', [id]); } catch (e) {}
+
+    // 3. Dọn dẹp chi tiết phiếu xuất
+    try { await db.query('DELETE FROM outbound_details WHERE product_id = $1', [id]); } catch (e) {}
+
+    // 4. Dọn dẹp chi tiết đơn hàng
+    try { await db.query('DELETE FROM sales_order_details WHERE product_id = $1', [id]); } catch (e) {}
+
+    // 5. Sau khi cắt đứt mọi liên kết, tiến hành xóa sản phẩm
+    const result = await db.query('DELETE FROM products WHERE id = $1', [id]);
+    
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy sản phẩm trong Database!');
+    }
+    return true;
+  } catch (error) {
+    throw error;
   }
-
-  // 2. Nếu tồn kho = 0, thì xóa dữ liệu liên quan ở bảng inventory trước
-  await db.query('DELETE FROM inventory WHERE product_id = $1', [id]);
-
-  // 3. Xóa sản phẩm
-  await productModel.deleteProduct(id);
 };
 
 module.exports = { addProduct, getProducts, editProduct, removeProduct };

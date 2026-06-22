@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const salesController = require('../controllers/salesController');
-// Nhập khẩu camera an ninh vào đây
-const { verifyManager } = require('../middlewares/authMiddleware');
+const { verifyToken, verifyManager } = require('../middlewares/authMiddleware');
 
-// Chỉ có ai có thẻ bài hợp lệ và có chức danh MANAGER/ADMIN mới được duyệt đơn
+router.post('/', verifyToken, salesController.createSalesOrder);
+router.get('/', verifyToken, salesController.getSalesOrders);
+router.get('/:id', verifyToken, salesController.getSalesOrderById);
 router.put('/approve/:id', verifyManager, salesController.approveSalesOrder);
 
 module.exports = router;
