@@ -12,8 +12,7 @@ const createProduct = async (sku, name, category, brand, size, type, unit, price
     INSERT INTO products (sku, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
   `;
-  const result = await db.query(query, [sku, name, category, brand, size, type, unit, price, img]);
-  return result.rows[0];
+  return await db.query(query, [sku, name, category, brand, size, type, unit, price, img]);
 };
 
 // Lấy danh sách sản phẩm kèm tồn kho
@@ -42,7 +41,6 @@ const updateProduct = async (id, name, category, brand, size, type, unit, price,
 
 // Cập nhật tồn kho
 const updateInventory = async (product_id, warehouse_id, quantity) => {
-  // Upsert: update nếu đã tồn tại, insert nếu chưa có
   const query = `
     INSERT INTO inventory (product_id, warehouse_id, quantity)
     VALUES ($1, $2, $3)
@@ -50,8 +48,7 @@ const updateInventory = async (product_id, warehouse_id, quantity) => {
     DO UPDATE SET quantity = $3, updated_at = NOW()
     RETURNING *;
   `;
-  const result = await db.query(query, [product_id, warehouse_id, quantity]);
-  return result.rows[0];
+  return await db.query(query, [product_id, warehouse_id, quantity]);
 };
 
 // Xóa sản phẩm
