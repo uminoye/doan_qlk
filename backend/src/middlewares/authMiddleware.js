@@ -24,4 +24,23 @@ const verifyManager = (req, res, next) => {
   });
 };
 
-module.exports = { verifyToken, verifyManager };
+/**
+ * Middleware kiểm tra quyền theo danh sách roles
+ * @param {string[]} allowedRoles - Mảng các role được phép
+ */
+const requireRoles = (allowedRoles) => {
+  return (req, res, next) => {
+    verifyToken(req, res, () => {
+      if (allowedRoles.includes(req.user.role)) {
+        next();
+      } else {
+        res.status(403).json({ 
+          success: false,
+          message: `❌ Không có quyền! Chỉ ${allowedRoles.join(', ')} mới được thực hiện thao tác này.` 
+        });
+      }
+    });
+  };
+};
+
+module.exports = { verifyToken, verifyManager, requireRoles };

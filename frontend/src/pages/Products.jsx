@@ -239,57 +239,75 @@ function Products() {
                 {filteredProducts.map((p) => {
                     const isOutOfStock = (p.inventory || 0) === 0;
                     return (
-                    <div key={p.id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', position: 'relative', display: 'flex', flexDirection: 'column', border: '1px solid #f1f5f9' }}>
+                        <div key={p.id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', position: 'relative', display: 'flex', flexDirection: 'column', border: '1px solid #f1f5f9' }}>
 
-                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: isOutOfStock ? '#fee2e2' : '#ecfdf5', color: isOutOfStock ? '#dc2626' : '#059669', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
-                            {isOutOfStock ? 'Hết hàng' : 'Còn hàng'}
-                        </div>
-                        <div style={{ position: 'absolute', top: '12px', left: '12px', background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
-                            {p.category_code}
-                        </div>
-
-                        <div style={{ height: '180px', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-                            {p.image_url ? (
-                                <img src={p.image_url} alt={p.name} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
-                            ) : (
-                                <span style={{ color: '#94a3b8', fontSize: '14px' }}>[Chưa cấu hình ảnh]</span>
-                            )}
-                        </div>
-
-                        <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                            <div>
-                                <h3 style={{ margin: '0 0 6px 0', fontSize: '15px', color: '#0f172a', fontWeight: 'bold', lineHeight: '1.4' }}>
-                                    {p.name} {p.size_or_capacity ? `(${p.size_or_capacity} ${p.category_code === 'TV' ? 'inch' : p.category_code === 'TL' ? 'L' : p.category_code === 'MG' ? 'Kg' : 'HP'})` : ''}
-                                </h3>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                                        {p.sku}
-                                    </span>
-                                    <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-                                        {p.brand_code} • {p.type_detail || ''}
-                                    </span>
-                                </div>
+                            <div style={{
+                                position: 'absolute', top: '12px', right: '12px',
+                                background: p.inventory > 0 ? '#ecfdf5' : '#fee2e2',
+                                color: p.inventory > 0 ? '#059669' : '#ef4444',
+                                padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', zIndex: 1
+                            }}>
+                                {p.inventory > 0 ? 'Còn hàng' : 'Hết hàng'}
+                            </div>
+                            <div style={{ position: 'absolute', top: '12px', left: '12px', background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
+                                {p.category_code}
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                            <div style={{ height: '180px', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                                {p.image_url ? (
+                                    <img src={p.image_url} alt={p.name} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                                ) : (
+                                    <span style={{ color: '#94a3b8', fontSize: '14px' }}>[Chưa cấu hình ảnh]</span>
+                                )}
+                            </div>
+
+                            <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div>
-                                    <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '16px' }}>{Number(p.sale_price).toLocaleString('vi-VN')} đ</div>
-                                    <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>/ {p.unit || 'Cái'}</div>
+                                    <h3 style={{ margin: '0 0 6px 0', fontSize: '15px', color: '#0f172a', fontWeight: 'bold', lineHeight: '1.4' }}>
+                                        {p.name} {p.size_or_capacity ? `(${p.size_or_capacity} ${p.category_code === 'TV' ? 'inch' : p.category_code === 'TL' ? 'L' : p.category_code === 'MG' ? 'Kg' : 'HP'})` : ''}
+                                    </h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                                            {p.sku}
+                                        </span>
+                                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>
+                                            {p.brand_code} • {p.type_detail || ''}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <div style={{ color: isOutOfStock ? '#dc2626' : '#0f172a', fontWeight: 'bold', fontSize: '16px' }}>{p.inventory || 0}</div>
-                                    <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>Tồn kho</div>
-                                </div>
-                            </div>
 
-                            {(canEdit || canDelete) && (
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
-                                    {canEdit && <button onClick={() => openEditModal(p)} style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Sửa thông tin"><Edit size={14} /></button>}
-                                    {canDelete && <button onClick={() => handleDelete(p.id, p.name)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Xóa vĩnh viễn"><Trash2 size={14} /></button>}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                    <div>
+                                        <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '16px' }}>{Number(p.sale_price).toLocaleString('vi-VN')} đ</div>
+                                        <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>/ {p.unit || 'Cái'}</div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ color: isOutOfStock ? '#dc2626' : '#0f172a', fontWeight: 'bold', fontSize: '16px' }}>{p.inventory || 0}</div>
+                                        <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>Tồn kho</div>
+                                    </div>
                                 </div>
-                            )}
+
+                                {(canEdit || canDelete) && (
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
+                                        {canEdit && (
+                                            <button onClick={() => openEditModal(p)} style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}>
+                                                <Edit size={14} />
+                                            </button>
+                                        )}
+
+                                        {/* Ép kiểu Number(p.inventory) để so sánh chính xác */}
+                                        {canDelete && Number(p.inventory) === 0 && (
+                                            <button
+                                                onClick={() => handleDelete(p.id, p.name)}
+                                                style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
                     );
                 })}
             </div>

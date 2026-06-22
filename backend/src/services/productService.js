@@ -1,4 +1,5 @@
 const productModel = require('../models/productModel');
+const db = require('../models/db');
 
 const addProduct = async (data) => {
   const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, inventory, warehouse_id } = data;
@@ -43,6 +44,18 @@ const editProduct = async (id, data) => {
 };
 
 const removeProduct = async (id) => {
+  // 1. Kiểm tra tồn kho trước khi xóa
+  const result = await db.query('SELECT quantity FROM inventory WHERE product_id = $1', [id]);
+  const totalStock = result.rows.reduce((sum, row) => sum + row.quantity, 0);
+
+  if (totalStock > 0) {
+    throw new Error('Không thể xóa: Sản phẩm vẫn còn tồn kho trong ít nhất một kho!');
+  }
+
+  // 2. Nếu tồn kho = 0, thì xóa dữ liệu liên quan ở bảng inventory trước
+  await db.query('DELETE FROM inventory WHERE product_id = $1', [id]);
+
+  // 3. Xóa sản phẩm
   await productModel.deleteProduct(id);
 };
 

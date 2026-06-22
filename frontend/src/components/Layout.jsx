@@ -1,5 +1,5 @@
 import { useNavigate, Outlet, Link, Navigate } from 'react-router-dom'; // Bổ sung công cụ Navigate ở đây
-import { LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, LogOut, UserCircle, Tag } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, LogOut, UserCircle, Tag, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 
 function Layout() {
   const navigate = useNavigate();
@@ -28,6 +28,8 @@ function Layout() {
   const menuItems = [
     { path: '/', name: 'Tổng quan', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'SALES', 'KHO', 'LOGISTICS', 'NHAMAY'] },
     { path: '/products', name: 'Sản phẩm', icon: <Tag size={20} />, roles: ['ADMIN', 'KHO', 'SALES'] },
+    { path: '/inbound', name: 'Nhập kho', icon: <ArrowDownToLine size={20} />, roles: ['ADMIN', 'KHO'] },
+    { path: '/outbound', name: 'Xuất kho', icon: <ArrowUpFromLine size={20} />, roles: ['ADMIN', 'KHO'] },
     { path: '/sales', name: 'Kinh doanh', icon: <ShoppingCart size={20} />, roles: ['ADMIN', 'SALES'] },
     { path: '/warehouse', name: 'Kho vận', icon: <Package size={20} />, roles: ['ADMIN', 'KHO'] },
     { path: '/logistics', name: 'Vận chuyển', icon: <Truck size={20} />, roles: ['ADMIN', 'LOGISTICS'] },

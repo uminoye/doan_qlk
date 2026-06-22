@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout'; // Kéo Layout vừa tạo vào
 import Warehouse from './pages/Warehouse';
 import Products from './pages/Products';
+import Inbound from './pages/Inbound';
 
 
 function PrivateRoute({ children }) {
@@ -21,7 +22,8 @@ function App() {
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="/warehouse" element={<Warehouse />} />
-          <Route path="/products" element={<Products />} /> {/* THÊM DÒNG NÀY */}
+          <Route path="/products" element={<Products />} />
+          <Route path="/inbound" element={<Inbound />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />
