@@ -1,0 +1,1175 @@
+﻿<file name="authController.js">
+const authService = require('../services/authService');
+
+const register = async (req, res) => {
+  try {
+    const { username, password, full_name, role } = req.body;
+    const newUser = await authService.registerUser(username, password, full_name, role);
+    res.json({ success: true, message: `Táº¡o tÃ i khoáº£n thÃ nh cÃ´ng! MÃ£ NV: ${newUser.employee_code}`, user: newUser });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const data = await authService.loginUser(username, password);
+    res.json({ 
+      success: true, 
+      message: 'ÄÄƒng nháº­p thÃ nh cÃ´ng!', 
+      token: data.token, 
+      user: data.user 
+    });
+
+  } catch (error) {
+    res.status(401).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { register, login };
+</file>
+<file name="customerController.js">
+const customerService = require('../services/customerService');
+
+const registerCustomer = async (req, res) => {
+  try {
+    const { name, phone, address } = req.body;
+    const newCustomer = await customerService.createCustomer(name, phone, address);
+    
+    res.json({ 
+      success: true, 
+      message: `Táº¡o khÃ¡ch hÃ ng thÃ nh cÃ´ng! MÃ£ tá»± sinh: ${newCustomer.customer_code}` 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { registerCustomer };
+</file>
+<file name="factoryController.js">
+const factoryService = require('../services/factoryService');
+
+const createRequest = async (req, res) => {
+  try {
+    const { factory_manager_id, items } = req.body;
+    const code = await factoryService.requestShipment(factory_manager_id, items);
+    res.json({ success: true, message: `Lá»‡nh giao hÃ ng ${code} Ä‘Ã£ Ä‘Æ°á»£c táº¡o. Äang chá» TrÆ°á»Ÿng Kho duyá»‡t! (PENDING)` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const approveRequest = async (req, res) => {
+  try {
+    const { id } = req.params; // ID cá»§a lá»‡nh giao hÃ ng
+    const { warehouse_manager_id } = req.body; // NgÆ°á»i duyá»‡t
+    
+    await factoryService.authorizeShipment(id, warehouse_manager_id);
+    res.json({ success: true, message: `âœ… Lá»‡nh giao hÃ ng Ä‘Ã£ Ä‘Æ°á»£c duyá»‡t (APPROVED)! Xe táº£i cÃ³ thá»ƒ cháº¡y vÃ o kho.` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const scanBarcode = async (req, res) => {
+  try {
+    const { shipment_id, sku } = req.body;
+    const result = await factoryService.scanItem(shipment_id, sku);
+    
+    if (result.status === 'DEFECTIVE') {
+      res.json({ 
+        success: false, 
+        isDefective: true,
+        message: `ðŸš¨ BÃP BÃP! PHÃT HIá»†N HÃ€NG Lá»–I: ${result.productName}. LÃ½ do: ${result.reason}. ÄÃ£ chuyá»ƒn vÃ o khu vá»±c Chá» Tráº£ NhÃ  MÃ¡y!` 
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        isDefective: false,
+        message: `*TÃ­t!* HÃ ng chuáº©n! ÄÃ£ nháº­n 1 cÃ¡i ${result.productName}. (Tiáº¿n Ä‘á»™ hÃ ng tá»‘t: ${result.scanned}/${result.expected})` 
+      });
+    }
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { createRequest, approveRequest, scanBarcode };
+</file>
+<file name="inboundController.js">
+const inboundService = require('../services/inboundService');
+
+const handleInbound = async (req, res) => {
+  try {
+    const { user_id, items } = req.body;
+    
+    if (!items || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'ChÆ°a chá»n sáº£n pháº©m Ä‘á»ƒ nháº­p kho!' });
+    }
+
+    const result = await inboundService.createInboundReceipt(user_id, items);
+    
+    res.json({
+      success: true,
+      message: `ðŸŽ‰ Nháº­p kho thÃ nh cÃ´ng! MÃ£ phiáº¿u: ${result.receiptCode}`,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { handleInbound };
+</file>
+<file name="inventoryController.js">
+const inventoryService = require('../services/inventoryService');
+
+const getStock = async (req, res) => {
+  try {
+    const stock = await inventoryService.checkStock();
+    res.json({
+      success: true,
+      message: 'Láº¥y bÃ¡o cÃ¡o tá»“n kho thÃ nh cÃ´ng!',
+      total_items_in_stock: stock.length,
+      data: stock
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lá»—i khi láº¥y dá»¯ liá»‡u tá»“n kho!' });
+  }
+};
+
+module.exports = { getStock };
+</file>
+<file name="locationController.js">
+const locationService = require('../services/locationService');
+
+const generateLocations = async (req, res) => {
+  try {
+    const totalBins = await locationService.generateWarehouseLayout();
+    res.json({ 
+      success: true, 
+      message: `ðŸš€ Ma thuáº­t thÃ nh cÃ´ng! ÄÃ£ xÃ¢y dá»±ng tá»± Ä‘á»™ng ${totalBins} vá»‹ trÃ­ Bin trong kho!` 
+    });
+  } catch (error) {
+    console.error('Lá»—i táº¡o sÆ¡ Ä‘á»“ kho:', error);
+    res.status(500).json({ success: false, message: 'MÃ¡y chá»§ quÃ¡ táº£i khi xÃ¢y kho!' });
+  }
+};
+
+module.exports = { generateLocations };
+</file>
+<file name="outboundController.js">
+const outboundService = require('../services/outboundService');
+
+const handleOutbound = async (req, res) => {
+  try {
+    const { user_id, items } = req.body;
+    
+    if (!items || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'ChÆ°a chá»n sáº£n pháº©m Ä‘á»ƒ xuáº¥t kho!' });
+    }
+
+    const result = await outboundService.createOutboundReceipt(user_id, items);
+    
+    res.json({
+      success: true,
+      message: `ðŸš€ Xuáº¥t kho thÃ nh cÃ´ng! MÃ£ phiáº¿u: ${result.receiptCode}`,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { handleOutbound };
+</file>
+<file name="productController.js">
+const productService = require('../services/productService');
+
+const createProduct = async (req, res) => {
+  try {
+    const newProduct = await productService.addProduct(req.body);
+    res.json({ success: true, message: 'ðŸŽ‰ ÄÃ£ thÃªm sáº£n pháº©m thÃ nh cÃ´ng!', product: newProduct });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lá»—i mÃ¡y chá»§ khi thÃªm sáº£n pháº©m!' });
+  }
+};
+
+const getAllProducts = async (req, res) => {
+  try {
+    const products = await productService.getProducts();
+    res.json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lá»—i láº¥y danh sÃ¡ch!' });
+  }
+};
+
+const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params; // Láº¥y ID tá»« Ä‘Æ°á»ng link
+    const updatedProduct = await productService.editProduct(id, req.body);
+    if (!updatedProduct) return res.status(404).json({ success: false, message: 'KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m!' });
+    res.json({ success: true, message: 'ÄÃ£ cáº­p nháº­t thÃ nh cÃ´ng!', product: updatedProduct });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lá»—i khi cáº­p nháº­t!' });
+  }
+};
+
+const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await productService.removeProduct(id);
+    res.json({ success: true, message: 'ÄÃ£ xÃ³a sáº£n pháº©m khá»i kho!' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lá»—i khi xÃ³a! CÃ³ thá»ƒ sáº£n pháº©m nÃ y Ä‘ang cÃ³ tá»“n kho.' });
+  }
+};
+
+module.exports = { createProduct, getAllProducts, updateProduct, deleteProduct };
+</file>
+<file name="salesController.js">
+const salesService = require('../services/salesService');
+
+const createSalesOrder = async (req, res) => {
+  try {
+    const { customer_id, sale_person_id, items } = req.body;
+    const result = await salesService.placeOrder(customer_id, sale_person_id, items);
+    
+    res.json({ 
+      success: true, 
+      message: `Táº¡o Ä‘Æ¡n thÃ nh cÃ´ng! MÃ£ Ä‘Æ¡n: ${result.orderCode}. Tá»•ng tiá»n: ${result.totalAmount.toLocaleString('vi-VN')} VNÄ. Chá» sáº¿p duyá»‡t!` 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const approveSalesOrder = async (req, res) => {
+  try {
+    const { id } = req.params; 
+    const { manager_id } = req.body;
+    
+    await salesService.authorizeOrder(id, manager_id);
+    res.json({ success: true, message: `âœ… Sáº¿p Ä‘Ã£ duyá»‡t Ä‘Æ¡n! Gá»­i yÃªu cáº§u qua kho Ä‘á»ƒ xuáº¥t hÃ ng ngay!` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { createSalesOrder, approveSalesOrder };
+</file>
+<file name="authMiddleware.js">
+const jwt = require('jsonwebtoken');
+const { SECRET_KEY } = require('../services/authService');
+
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]; // Láº¥y token tá»« header
+  if (!token) return res.status(403).json({ message: "âŒ Thiáº¿u tháº» bÃ i (Token)!" });
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded; // LÆ°u thÃ´ng tin ngÆ°á»i dÃ¹ng vÃ o request
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "âŒ Tháº» bÃ i khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n!" });
+  }
+};
+
+const verifyManager = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user.role === 'MANAGER' || req.user.role === 'ADMIN') {
+      next();
+    } else {
+      res.status(403).json({ message: "âŒ CÃºt! Chá»©c vá»¥ tháº¥p quÃ¡ khÃ´ng Ä‘Æ°á»£c duyá»‡t Ä‘Æ¡n!" });
+    }
+  });
+};
+
+module.exports = { verifyToken, verifyManager };
+</file>
+<file name="authModel.js">
+const db = require('./db');
+
+const getUserByUsername = async (username) => {
+  const result = await db.query(`SELECT * FROM users WHERE username = $1`, [username]);
+  return result.rows[0];
+};
+
+const createUser = async (username, passwordHash, fullName, role, employeeCode) => {
+  const result = await db.query(
+    `INSERT INTO users (username, password_hash, full_name, role, employee_code)
+     VALUES ($1, $2, $3, $4, $5) RETURNING id, username, role, employee_code`,
+    [username, passwordHash, fullName, role, employeeCode]
+  );
+  return result.rows[0];
+};
+
+module.exports = { getUserByUsername, createUser };
+</file>
+<file name="customerModel.js">
+const db = require('./db');
+
+const addCustomer = async (customerCode, name, phone, address) => {
+  const result = await db.query(
+    `INSERT INTO customers (customer_code, name, phone, address) 
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [customerCode, name, phone, address]
+  );
+  return result.rows[0];
+};
+
+module.exports = { addCustomer };
+</file>
+<file name="db.js">
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Báº¯t buá»™c khi dÃ¹ng Database trÃªn mÃ¢y
+  }
+});
+
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error('âŒ Lá»—i káº¿t ná»‘i Database:', err.stack);
+  } else {
+    console.log('âœ… ÄÃ£ káº¿t ná»‘i thÃ nh cÃ´ng vá»›i Database trÃªn ÄÃ¡m mÃ¢y!');
+  }
+  if (client) release(); // Tráº£ láº¡i káº¿t ná»‘i cho há»‡ thá»‘ng
+});
+
+module.exports = pool;
+</file>
+<file name="factoryModel.js">
+const db = require('./db');
+
+// Láº­p lá»‡nh giao hÃ ng má»›i
+const createShipment = async (shipmentCode, factoryManagerId, items) => {
+  const receiptRes = await db.query(
+    `INSERT INTO factory_shipments (shipment_code, factory_manager_id) VALUES ($1, $2) RETURNING id`,
+    [shipmentCode, factoryManagerId]
+  );
+  const shipmentId = receiptRes.rows[0].id;
+
+  for (let item of items) {
+    await db.query(
+      `INSERT INTO factory_shipment_details (shipment_id, product_id, expected_qty) VALUES ($1, $2, $3)`,
+      [shipmentId, item.productId, item.quantity]
+    );
+  }
+  return shipmentId;
+};
+
+// Quáº£n lÃ½ kho duyá»‡t lá»‡nh
+const approveShipment = async (shipmentId, warehouseManagerId) => {
+  const result = await db.query(
+    `UPDATE factory_shipments 
+     SET status = 'APPROVED', warehouse_manager_id = $1 
+     WHERE id = $2 RETURNING *`,
+    [shipmentId, warehouseManagerId]
+  );
+  return result.rows[0];
+};
+
+// Dá»‹ch mÃ£ váº¡ch (SKU) ra thÃ´ng tin sáº£n pháº©m
+const getProductBySKU = async (sku) => {
+  const result = await db.query('SELECT id, name FROM products WHERE sku = $1', [sku]);
+  return result.rows[0];
+};
+
+// Cáº­p nháº­t: Cá»© má»—i láº§n quÃ©t lÃ  cá»™ng thÃªm 1 vÃ o cá»™t scanned_qty
+const updateScannedQuantity = async (shipmentId, productId) => {
+  const result = await db.query(
+    `UPDATE factory_shipment_details 
+     SET scanned_qty = scanned_qty + 1 
+     WHERE shipment_id = $1 AND product_id = $2 
+     RETURNING expected_qty, scanned_qty`,
+    [shipmentId, productId]
+  );
+  return result.rows[0];
+};
+
+// Ghi nháº­n hÃ ng lá»—i vÃ o sá»• vÃ  tÄƒng biáº¿n Ä‘áº¿m hÃ ng lá»—i lÃªn 1
+const recordDefectiveItem = async (shipmentId, productId, reason) => {
+  // TÄƒng sá»‘ Ä‘áº¿m hÃ ng lá»—i
+  await db.query(
+    `UPDATE factory_shipment_details 
+     SET defect_qty = defect_qty + 1 
+     WHERE shipment_id = $1 AND product_id = $2`,
+    [shipmentId, productId]
+  );
+  
+  // Ghi lÃ½ do vÃ o cuá»‘n sá»•
+  await db.query(
+    `INSERT INTO return_to_factory_logs (shipment_id, product_id, reason) 
+     VALUES ($1, $2, $3)`,
+    [shipmentId, productId, reason]
+  );
+};
+
+module.exports = { createShipment, approveShipment, getProductBySKU, updateScannedQuantity, recordDefectiveItem };
+</file>
+<file name="inboundModel.js">
+const db = require('./db');
+
+// Láº¥y thÃ´ng tin sáº£n pháº©m Ä‘á»ƒ biáº¿t nÃ³ thuá»™c Khu vá»±c nÃ o
+const getProductInfo = async (productId) => {
+  const result = await db.query('SELECT * FROM products WHERE id = $1', [productId]);
+  return result.rows[0];
+};
+
+// TÃ¬m cÃ¡c Bin Ä‘ang trá»‘ng trong Ä‘Ãºng Khu vá»±c Ä‘Ã³
+const getEmptyBins = async (zoneCode, neededQty) => {
+  // Æ¯u tiÃªn xáº¿p tá»« Táº§ng 1 lÃªn Táº§ng trÃªn, tá»« Ká»‡ 1 Ä‘áº¿n Ká»‡ cuá»‘i cho khoa há»c
+  const result = await db.query(
+    `SELECT id, location_code FROM locations 
+     WHERE zone_code = $1 AND status = 'EMPTY' 
+     ORDER BY aisle, rack, shelf, bin LIMIT $2`,
+    [zoneCode, neededQty]
+  );
+  return result.rows;
+};
+
+// Thá»±c hiá»‡n lÆ°u Phiáº¿u nháº­p vÃ  cáº¥t hÃ ng vÃ o Bin
+const executeInbound = async (userId, receiptCode, productDetails) => {
+  // 1. Táº¡o tá» Phiáº¿u Nháº­p
+  const receiptRes = await db.query(
+    `INSERT INTO inbound_receipts (receipt_code, user_id) VALUES ($1, $2) RETURNING id`,
+    [receiptCode, userId]
+  );
+  const receiptId = receiptRes.rows[0].id;
+
+  // 2. Äi cáº¥t tá»«ng mÃ³n hÃ ng vÃ o Bin
+  for (let item of productDetails) {
+    for (let bin of item.bins) {
+      // Äá»•i tráº¡ng thÃ¡i Bin thÃ nh ÄÃƒ Äáº¦Y vÃ  ghi tÃªn sáº£n pháº©m vÃ o
+      await db.query(
+        `UPDATE locations SET status = 'FULL', product_id = $1, current_qty = 1 WHERE id = $2`,
+        [item.productId, bin.id]
+      );
+      
+      // Ghi dÃ²ng chi tiáº¿t vÃ o Phiáº¿u Nháº­p
+      await db.query(
+        `INSERT INTO inbound_details (receipt_id, product_id, location_id, quantity) VALUES ($1, $2, $3, 1)`,
+        [receiptId, item.productId, bin.id]
+      );
+    }
+  }
+  return receiptId;
+};
+
+module.exports = { getProductInfo, getEmptyBins, executeInbound };
+</file>
+<file name="inventoryModel.js">
+const db = require('./db');
+
+const getInventoryList = async () => {
+  const query = `
+    SELECT 
+      p.sku AS "Ma_San_Pham", 
+      p.name AS "Ten_San_Pham", 
+      COUNT(l.id) AS "So_Luong_Ton",
+      json_agg(l.location_code) AS "Danh_Sach_Bin"
+    FROM locations l
+    JOIN products p ON l.product_id = p.id
+    WHERE l.status = 'FULL'
+    GROUP BY p.id, p.sku, p.name;
+  `;
+  const result = await db.query(query);
+  return result.rows;
+};
+
+module.exports = { getInventoryList };
+</file>
+<file name="locationModel.js">
+const db = require('./db');
+
+const insertBulkLocations = async (locations) => {
+  // Chuyá»ƒn máº£ng dá»¯ liá»‡u thÃ nh chuá»—i SQL
+  const values = locations.map(loc => 
+    `('${loc.code}', '${loc.zone}', ${loc.a}, ${loc.r}, ${loc.s}, ${loc.b})`
+  ).join(', ');
+
+  // ON CONFLICT DO NOTHING: Náº¿u cháº¡y láº¡i láº§n 2 mÃ  mÃ£ Bin Ä‘Ã£ tá»“n táº¡i thÃ¬ bá» qua, khÃ´ng bÃ¡o lá»—i
+  const query = `
+    INSERT INTO locations (location_code, zone_code, aisle, rack, shelf, bin) 
+    VALUES ${values} 
+    ON CONFLICT (location_code) DO NOTHING;
+  `;
+  
+  await db.query(query);
+};
+
+module.exports = { insertBulkLocations };
+</file>
+<file name="outboundModel.js">
+const db = require('./db');
+
+// TÃ¬m cÃ¡c Bin Ä‘ang chá»©a Ä‘Ãºng mÃ³n hÃ ng mÃ  khÃ¡ch cáº§n láº¥y
+const getAvailableBins = async (productId, neededQty) => {
+  const result = await db.query(
+    `SELECT id, location_code FROM locations 
+     WHERE product_id = $1 AND status = 'FULL' 
+     ORDER BY aisle, rack, shelf, bin LIMIT $2`,
+    [productId, neededQty]
+  );
+  return result.rows;
+};
+
+// Thá»±c hiá»‡n táº¡o Phiáº¿u Xuáº¥t vÃ  láº¥y hÃ ng ra khá»i Bin
+const executeOutbound = async (userId, receiptCode, productDetails) => {
+  const receiptRes = await db.query(
+    `INSERT INTO outbound_receipts (receipt_code, user_id) VALUES ($1, $2) RETURNING id`,
+    [receiptCode, userId]
+  );
+  const receiptId = receiptRes.rows[0].id;
+
+  for (let item of productDetails) {
+    for (let bin of item.bins) {
+      // Dá»n sáº¡ch Bin: Äá»•i thÃ nh EMPTY, xÃ³a tÃªn sáº£n pháº©m, Ä‘Æ°a sá»‘ lÆ°á»£ng vá» 0
+      await db.query(
+        `UPDATE locations SET status = 'EMPTY', product_id = NULL, current_qty = 0 WHERE id = $1`,
+        [bin.id]
+      );
+      
+      // Ghi lá»‹ch sá»­ xuáº¥t kho
+      await db.query(
+        `INSERT INTO outbound_details (receipt_id, product_id, location_id, quantity) VALUES ($1, $2, $3, 1)`,
+        [receiptId, item.productId, bin.id]
+      );
+    }
+  }
+  return receiptId;
+};
+
+module.exports = { getAvailableBins, executeOutbound };
+</file>
+<file name="productModel.js">
+const db = require('./db');
+
+// Äáº¿m sáº£n pháº©m Ä‘á»ƒ lÃ m mÃ£ SKU
+const countProductsByPrefix = async (prefix) => {
+  const result = await db.query('SELECT COUNT(*) FROM products WHERE sku LIKE $1', [`${prefix}%`]);
+  return parseInt(result.rows[0].count);
+};
+
+// LÆ°u sáº£n pháº©m má»›i
+const createProduct = async (sku, name, category, brand, size, type, unit, price, img) => {
+  const query = `
+    INSERT INTO products (sku, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
+  `;
+  const result = await db.query(query, [sku, name, category, brand, size, type, unit, price, img]);
+  return result.rows[0];
+};
+
+// Láº¥y danh sÃ¡ch sáº£n pháº©m kÃ¨m tá»“n kho
+const getAllProducts = async () => {
+  const result = await db.query(`
+    SELECT p.*, COALESCE(SUM(i.quantity), 0) as inventory
+    FROM products p
+    LEFT JOIN inventory i ON p.id = i.product_id
+    GROUP BY p.id
+    ORDER BY p.id DESC
+  `);
+  return result.rows;
+};
+
+// Sá»­a thÃ´ng tin sáº£n pháº©m
+const updateProduct = async (id, name, category, brand, size, type, unit, price, img) => {
+  const query = `
+    UPDATE products 
+    SET name = $1, category_code = $2, brand_code = $3, size_or_capacity = $4, 
+        type_detail = $5, unit = $6, sale_price = $7, image_url = $8
+    WHERE id = $9 RETURNING *;
+  `;
+  const result = await db.query(query, [name, category, brand, size, type, unit, price, img, id]);
+  return result.rows[0];
+};
+
+// Cáº­p nháº­t tá»“n kho
+const updateInventory = async (product_id, warehouse_id, quantity) => {
+  // Upsert: update náº¿u Ä‘Ã£ tá»“n táº¡i, insert náº¿u chÆ°a cÃ³
+  const query = `
+    INSERT INTO inventory (product_id, warehouse_id, quantity)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (product_id, warehouse_id) 
+    DO UPDATE SET quantity = $3, updated_at = NOW()
+    RETURNING *;
+  `;
+  const result = await db.query(query, [product_id, warehouse_id, quantity]);
+  return result.rows[0];
+};
+
+// XÃ³a sáº£n pháº©m
+const deleteProduct = async (id) => {
+  await db.query('DELETE FROM products WHERE id = $1', [id]);
+};
+
+module.exports = { countProductsByPrefix, createProduct, getAllProducts, updateProduct, updateInventory, deleteProduct };
+</file>
+<file name="salesModel.js">
+const db = require('./db');
+
+const createOrder = async (customerId, salePersonId, orderCode, totalAmount, items) => {
+  const orderRes = await db.query(
+    `INSERT INTO sales_orders (order_code, customer_id, sale_person_id, total_amount) 
+     VALUES ($1, $2, $3, $4) RETURNING id`,
+    [orderCode, customerId, salePersonId, totalAmount]
+  );
+  const orderId = orderRes.rows[0].id;
+
+  for (let item of items) {
+    await db.query(
+      `INSERT INTO sales_order_details (order_id, product_id, quantity, unit_price) 
+       VALUES ($1, $2, $3, $4)`,
+      [orderId, item.productId, item.quantity, item.unitPrice]
+    );
+  }
+  return orderId;
+};
+
+const approveOrder = async (orderId, managerId) => {
+  const result = await db.query(
+    `UPDATE sales_orders 
+     SET status = 'APPROVED', approved_by = $1 
+     WHERE id = $2 RETURNING *`,
+    [orderId, managerId]
+  );
+  return result.rows[0];
+};
+
+module.exports = { createOrder, approveOrder };
+</file>
+<file name="authRoutes.js">
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+
+router.post('/login', authController.login); // ÄÃºng Ä‘Æ°á»ng dáº«n lÃ  /api/auth/login
+router.post('/register', authController.register);
+
+module.exports = router;
+</file>
+<file name="customerRoutes.js">
+const express = require('express');
+const router = express.Router();
+const customerController = require('../controllers/customerController');
+
+router.post('/create', customerController.registerCustomer);
+
+module.exports = router;
+</file>
+<file name="factoryRoutes.js">
+const express = require('express');
+const router = express.Router();
+const factoryController = require('../controllers/factoryController');
+const { verifyManager } = require('../middlewares/authMiddleware');
+
+router.post('/create', factoryController.createRequest);
+
+// BÃ¡c báº£o vá»‡ Ä‘á»©ng gÃ¡c á»Ÿ Ä‘Ã¢y: Äi qua báº£o vá»‡ má»›i Ä‘Æ°á»£c gáº·p Tá»• trÆ°á»Ÿng (Controller)
+router.put('/approve/:id', verifyManager, factoryController.approveRequest);
+router.post('/scan', factoryController.scanBarcode);
+
+module.exports = router;
+</file>
+<file name="inboundRoutes.js">
+const express = require('express');
+const router = express.Router();
+const inboundController = require('../controllers/inboundController');
+
+router.post('/', inboundController.handleInbound);
+
+module.exports = router;
+</file>
+<file name="inventoryRoutes.js">
+const express = require('express');
+const router = express.Router();
+const inventoryController = require('../controllers/inventoryController');
+
+router.get('/', inventoryController.getStock);
+
+module.exports = router;
+
+</file>
+<file name="locationRoutes.js">
+const express = require('express');
+const router = express.Router();
+const locationController = require('../controllers/locationController');
+
+// Má»Ÿ má»™t Ä‘Æ°á»ng link bÃ­ máº­t Ä‘á»ƒ kÃ­ch hoáº¡t ma thuáº­t
+router.post('/generate', locationController.generateLocations);
+
+module.exports = router;
+</file>
+<file name="outboundRoutes.js">
+const express = require('express');
+const router = express.Router();
+const outboundController = require('../controllers/outboundController');
+
+router.post('/', outboundController.handleOutbound);
+
+module.exports = router;
+</file>
+<file name="productRoutes.js">
+const express = require('express');
+const router = express.Router();
+const productController = require('../controllers/productController');
+
+router.post('/', productController.createProduct);
+router.get('/', productController.getAllProducts);
+router.put('/:id', productController.updateProduct); // Cá»­a Ä‘á»ƒ Sá»­a
+router.delete('/:id', productController.deleteProduct); // Cá»­a Ä‘á»ƒ XÃ³a
+
+module.exports = router;
+</file>
+<file name="salesRoutes.js">
+const express = require('express');
+const router = express.Router();
+const salesController = require('../controllers/salesController');
+// Nháº­p kháº©u camera an ninh vÃ o Ä‘Ã¢y
+const { verifyManager } = require('../middlewares/authMiddleware');
+
+// Chá»‰ cÃ³ ai cÃ³ tháº» bÃ i há»£p lá»‡ vÃ  cÃ³ chá»©c danh MANAGER/ADMIN má»›i Ä‘Æ°á»£c duyá»‡t Ä‘Æ¡n
+router.put('/approve/:id', verifyManager, salesController.approveSalesOrder);
+
+module.exports = router;
+</file>
+<file name="authService.js">
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const authModel = require('../models/authModel');
+
+// Con dáº¥u xá»‹n cá»§a cÃ´ng ty Ä‘á»ƒ Ä‘Ã³ng má»™c lÃªn Tháº» tá»« (JWT)
+// Thá»±c táº¿ ngÆ°á»i ta giáº¥u cÃ¡i nÃ y Ä‘i, nhÆ°ng mÃ¬nh Ä‘ang test nÃªn Ä‘á»ƒ Ä‘Ã¢y cho dá»…
+const SECRET_KEY = 'DoAn_WMS_Secret_2026';
+
+const registerUser = async (username, password, fullName, role) => {
+  const existingUser = await authModel.getUserByUsername(username);
+  if (existingUser) throw new Error('âŒ TÃªn Ä‘Äƒng nháº­p nÃ y Ä‘Ã£ cÃ³ ngÆ°á»i xÃ i!');
+
+  // BÄƒm máº­t kháº©u ra 10 máº£nh
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // Tá»± sinh mÃ£ NhÃ¢n viÃªn y nhÆ° em lÃ m vá»›i khÃ¡ch hÃ ng
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const employeeCode = `NV-${randomNum}`;
+
+  return await authModel.createUser(username, passwordHash, fullName, role, employeeCode);
+};
+
+const loginUser = async (username, password) => {
+  const user = await authModel.getUserByUsername(username);
+  if (!user) throw new Error('âŒ KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n nÃ y!');
+
+  // Láº¥y máº­t kháº©u nháº­p vÃ o so sÃ¡nh vá»›i má»› bÄƒm nÃ¡t trong Database
+  const isMatch = await bcrypt.compare(password, user.password_hash);
+  if (!isMatch) throw new Error('âŒ Sai máº­t kháº©u rá»“i em Æ¡i!');
+
+  // ÄÄƒng nháº­p thÃ nh cÃ´ng -> In tháº» tá»« (Token) cÃ³ háº¡n dÃ¹ng 8 tiáº¿ng
+  const token = jwt.sign(
+    { id: user.id, role: user.role, name: user.full_name },
+    SECRET_KEY,
+    { expiresIn: '8h' }
+  );
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      full_name: user.full_name, // Gá»­i Ä‘Ãºng chá»¯ full_name Ä‘á»ƒ Sidebar in ra
+      role: user.role,
+      level: user.level          // Gá»­i thÃªm level Ä‘á»ƒ Sidebar tá»± Ä‘á»•i mÃ u
+    }
+  };
+};
+
+module.exports = { registerUser, loginUser, SECRET_KEY };
+</file>
+<file name="customerService.js">
+const customerModel = require('../models/customerModel');
+
+const createCustomer = async (name, phone, address) => {
+  // MÃ¡y tá»± Ä‘áº» mÃ£ KhÃ¡ch hÃ ng (VD: KH-8829)
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const customerCode = `KH-${randomNum}`;
+
+  return await customerModel.addCustomer(customerCode, name, phone, address);
+};
+
+module.exports = { createCustomer };
+</file>
+<file name="factoryService.js">
+const factoryModel = require('../models/factoryModel');
+
+const requestShipment = async (factoryManagerId, items) => {
+  // Táº¡o mÃ£ lá»‡nh (VD: NM-20260620-5555)
+  const date = new Date();
+  const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const shipmentCode = `NM-${dateString}-${randomNum}`;
+
+  await factoryModel.createShipment(shipmentCode, factoryManagerId, items);
+  return shipmentCode;
+};
+
+const authorizeShipment = async (shipmentId, warehouseManagerId) => {
+  return await factoryModel.approveShipment(shipmentId, warehouseManagerId);
+};
+
+const scanItem = async (shipmentId, sku) => {
+  const product = await factoryModel.getProductBySKU(sku);
+  if (!product) throw new Error('âŒ MÃ£ váº¡ch tÃ o lao!');
+
+  // Tá»· lá»‡ lá»—i 10% (0.1)
+  const isDefective = Math.random() < 0.1; 
+
+  if (isDefective) {
+    // Náº¿u bá»‘c trÃºng hÃ ng lá»—i, chá»n ngáº«u nhiÃªn 1 lÃ½ do
+    const reasons = ['MÃ³p mÃ©o vá» há»™p', 'Vá»¡ mÃ n hÃ¬nh', 'Thiáº¿u phá»¥ kiá»‡n', 'Báº­t khÃ´ng lÃªn nguá»“n'];
+    const randomReason = reasons[Math.floor(Math.random() * reasons.length)];
+    
+    await factoryModel.recordDefectiveItem(shipmentId, product.id, randomReason);
+    
+    return {
+      status: 'DEFECTIVE',
+      productName: product.name,
+      reason: randomReason
+    };
+  } else {
+    // Náº¿u hÃ ng ngon (90%), thÃ¬ cá»™ng vÃ o sá»‘ hÃ ng tá»‘t (scanned_qty) nhÆ° cÅ©
+    const updatedDetail = await factoryModel.updateScannedQuantity(shipmentId, product.id);
+    
+    // ðŸ‘‡ THÃŠM 3 DÃ’NG Báº¢O Vá»† NÃ€Y VÃ€O ðŸ‘‡
+    if (!updatedDetail) {
+      throw new Error('âŒ MÃ£ Lá»‡nh Giao HÃ ng (shipment_id) bá»‹ sai, hoáº·c sáº£n pháº©m nÃ y khÃ´ng cÃ³ trong Lá»‡nh!');
+    }
+    // ðŸ‘† THÃŠM XONG ðŸ‘†
+
+    if (updatedDetail.scanned_qty > updatedDetail.expected_qty) {
+      throw new Error(`âš ï¸ Cáº¢NH BÃO: QuÃ©t lá»‘ sá»‘ lÆ°á»£ng NhÃ  mÃ¡y bÃ¡o!`);
+    }
+
+    return {
+      status: 'GOOD',
+      productName: product.name,
+      expected: updatedDetail.expected_qty,
+      scanned: updatedDetail.scanned_qty
+    };
+  }
+};
+
+
+
+module.exports = { requestShipment, authorizeShipment, scanItem };
+</file>
+<file name="inboundService.js">
+const inboundModel = require('../models/inboundModel');
+
+const createInboundReceipt = async (userId, items) => {
+  let productDetails = [];
+
+  // BÆ¯á»šC 1: Kiá»ƒm tra sá»©c chá»©a trÆ°á»›c khi cho xe táº£i vÃ o kho
+  for (let item of items) {
+    const product = await inboundModel.getProductInfo(item.productId);
+    if (!product) throw new Error(`KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m ID ${item.productId}`);
+
+    const zoneCode = `${product.category_code}-${product.brand_code}`;
+    const emptyBins = await inboundModel.getEmptyBins(zoneCode, item.quantity);
+
+    // Náº¿u sá»‘ Bin trá»‘ng Ã­t hÆ¡n sá»‘ hÃ ng mang tá»›i -> Äuá»•i vá»!
+    if (emptyBins.length < item.quantity) {
+      throw new Error(`Khu vá»±c ${zoneCode} bá»‹ Ä‘áº§y! Chá»‰ cÃ²n ${emptyBins.length} vá»‹ trÃ­ trá»‘ng, khÃ´ng Ä‘á»§ chá»©a ${item.quantity} sáº£n pháº©m!`);
+    }
+
+    productDetails.push({
+      productId: item.productId,
+      quantity: item.quantity,
+      bins: emptyBins // Danh sÃ¡ch cÃ¡c Bin sáº½ Ä‘Æ°á»£c dÃ¹ng Ä‘á»ƒ cáº¥t hÃ ng
+    });
+  }
+
+  // BÆ¯á»šC 2: Táº¡o mÃ£ phiáº¿u tá»± Ä‘á»™ng (VD: PN-20260620-1234)
+  const date = new Date();
+  const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const receiptCode = `PN-${dateString}-${randomNum}`;
+
+  // BÆ¯á»šC 3: Ra lá»‡nh cho Thá»§ kho lÆ°u dá»¯ liá»‡u
+  await inboundModel.executeInbound(userId, receiptCode, productDetails);
+  
+  return { receiptCode, details: productDetails };
+};
+
+module.exports = { createInboundReceipt };
+</file>
+<file name="inventoryService.js">
+const inventoryModel = require('../models/inventoryModel');
+
+const checkStock = async () => {
+  return await inventoryModel.getInventoryList();
+};
+
+module.exports = { checkStock };
+</file>
+<file name="locationService.js">
+const locationModel = require('../models/locationModel');
+
+const generateWarehouseLayout = async () => {
+  // Cáº¥u hÃ¬nh chuáº©n theo báº£n thiáº¿t káº¿ em cung cáº¥p
+  const configs = [
+    { category: 'TV', brands: ['SN', 'SS', 'LG', 'TCL'], aisles: 4, racks: 5, shelves: 3, bins: 4 },
+    { category: 'TL', brands: ['PNS', 'AQ', 'TSB', 'HTC'], aisles: 4, racks: 5, shelves: 2, bins: 4 },
+    { category: 'MG', brands: ['EL', 'LG', 'TSB', 'AQ'], aisles: 4, racks: 5, shelves: 2, bins: 4 },
+    { category: 'ML', brands: ['DK', 'PNS', 'CP', 'SP'], aisles: 4, racks: 5, shelves: 3, bins: 3 },
+  ];
+
+  let allLocations = [];
+
+  // VÃ²ng láº·p "Ma thuáº­t" táº¡o ra hÃ ng ngÃ n Bin
+  for (let config of configs) {
+    for (let brand of config.brands) {
+      let zone = `${config.category}-${brand}`; // VÃ­ dá»¥: TV-SN
+
+      for (let a = 1; a <= config.aisles; a++) {
+        for (let r = 1; r <= config.racks; r++) {
+          for (let s = 1; s <= config.shelves; s++) {
+            for (let b = 1; b <= config.bins; b++) {
+              // GhÃ©p tÃªn mÃ£ Ä‘á»‹nh danh (VÃ­ dá»¥: TV-SN-A1-R2-S3-B4)
+              let code = `${zone}-A${a}-R${r}-S${s}-B${b}`;
+              allLocations.push({ code, zone, a, r, s, b });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Gá»­i máº£ng chá»©a gáº§n 3000 vá»‹ trÃ­ nÃ y xuá»‘ng cho Thá»§ Kho lÆ°u
+  await locationModel.insertBulkLocations(allLocations);
+  return allLocations.length; // Tráº£ vá» tá»•ng sá»‘ Bin Ä‘Ã£ táº¡o
+};
+
+module.exports = { generateWarehouseLayout };
+</file>
+<file name="outboundService.js">
+const outboundModel = require('../models/outboundModel');
+
+const createOutboundReceipt = async (userId, items) => {
+  let productDetails = [];
+
+  // BÆ¯á»šC 1: Kiá»ƒm tra xem kho cÃ³ Ä‘á»§ hÃ ng Ä‘á»ƒ bÃ¡n khÃ´ng
+  for (let item of items) {
+    const availableBins = await outboundModel.getAvailableBins(item.productId, item.quantity);
+
+    if (availableBins.length < item.quantity) {
+      throw new Error(`KhÃ´ng Ä‘á»§ hÃ ng! Sáº£n pháº©m ID ${item.productId} chá»‰ cÃ²n ${availableBins.length} cÃ¡i trong kho.`);
+    }
+
+    productDetails.push({
+      productId: item.productId,
+      quantity: item.quantity,
+      bins: availableBins
+    });
+  }
+
+  // BÆ¯á»šC 2: Táº¡o mÃ£ phiáº¿u xuáº¥t (VÃ­ dá»¥: PX-20260620-8888)
+  const date = new Date();
+  const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const receiptCode = `PX-${dateString}-${randomNum}`;
+
+  // BÆ¯á»šC 3: Ra lá»‡nh cho Thá»§ kho xuáº¥t hÃ ng
+  await outboundModel.executeOutbound(userId, receiptCode, productDetails);
+  
+  return { receiptCode, details: productDetails };
+};
+
+module.exports = { createOutboundReceipt };
+</file>
+<file name="productService.js">
+const productModel = require('../models/productModel');
+
+const addProduct = async (data) => {
+  const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, inventory, warehouse_id } = data;
+
+  // Xá»­ lÃ½ táº¡o mÃ£ SKU
+  let skuPrefix = `${category_code}-${brand_code}`;
+  if (size_or_capacity) skuPrefix += `-${size_or_capacity}`;
+
+  const currentCount = await productModel.countProductsByPrefix(skuPrefix);
+  const sequenceString = (currentCount + 1).toString().padStart(3, '0');
+  const finalSKU = `${skuPrefix}-${sequenceString}`;
+
+  // Gá»i Thá»§ Kho Ä‘á»ƒ lÆ°u
+  const newProduct = await productModel.createProduct(
+    finalSKU, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url
+  );
+
+  // Cáº­p nháº­t tá»“n kho ban Ä‘áº§u
+  if (inventory !== undefined && inventory > 0) {
+    await productModel.updateInventory(newProduct.id, warehouse_id || 1, inventory);
+  }
+
+  return newProduct;
+};
+
+const getProducts = async () => {
+  return await productModel.getAllProducts();
+};
+
+const editProduct = async (id, data) => {
+  const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, inventory, warehouse_id } = data;
+
+  // Cáº­p nháº­t thÃ´ng tin sáº£n pháº©m
+  const updatedProduct = await productModel.updateProduct(id, name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url);
+
+  // Cáº­p nháº­t tá»“n kho náº¿u cÃ³
+  if (inventory !== undefined) {
+    await productModel.updateInventory(id, warehouse_id || 1, inventory);
+  }
+
+  return updatedProduct;
+};
+
+const removeProduct = async (id) => {
+  await productModel.deleteProduct(id);
+};
+
+module.exports = { addProduct, getProducts, editProduct, removeProduct };
+</file>
+<file name="salesService.js">
+const salesModel = require('../models/salesModel');
+
+const placeOrder = async (customerId, salePersonId, items) => {
+  let totalAmount = 0;
+  for (let item of items) {
+    totalAmount += item.quantity * item.unitPrice;
+  }
+
+  const date = new Date();
+  const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const orderCode = `SO-${dateString}-${randomNum}`;
+
+  await salesModel.createOrder(customerId, salePersonId, orderCode, totalAmount, items);
+  
+  return { orderCode, totalAmount };
+};
+
+const authorizeOrder = async (orderId, managerId) => {
+  return await salesModel.approveOrder(orderId, managerId);
+};
+
+module.exports = { placeOrder, authorizeOrder };
+</file>
+<file name="index.js">
+const express = require('express');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+const db = require('./src/models/db');
+
+const app = express();
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Routes Configuration
+const productRoutes = require('./src/routes/productRoutes');
+app.use('/api/products', productRoutes);
+
+const locationRoutes = require('./src/routes/locationRoutes');
+app.use('/api/locations', locationRoutes);
+
+const inboundRoutes = require('./src/routes/inboundRoutes');
+app.use('/api/inbound', inboundRoutes);
+
+const inventoryRoutes = require('./src/routes/inventoryRoutes');
+app.use('/api/inventory', inventoryRoutes);
+
+const outboundRoutes = require('./src/routes/outboundRoutes');
+app.use('/api/outbound', outboundRoutes);
+
+const factoryRoutes = require('./src/routes/factoryRoutes');
+app.use('/api/factory', factoryRoutes);
+
+const customerRoutes = require('./src/routes/customerRoutes');
+app.use('/api/customers', customerRoutes);
+
+const salesRoutes = require('./src/routes/salesRoutes');
+app.use('/api/sales', salesRoutes);
+
+const authRoutes = require('./src/routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
+// Development APIs
+app.get('/api/setup', async (req, res) => {
+  try {
+    const hash = await bcrypt.hash('123456', 10);
+    // Update default password for all users
+    await db.query("UPDATE users SET password_hash = $1", [hash]);
+    res.send(`<h2>âœ… Cáº­p nháº­t máº­t kháº©u há»‡ thá»‘ng thÃ nh cÃ´ng.</h2><p>MÃ£ bÄƒm: ${hash}</p>`);
+  } catch (error) {
+    res.status(500).send('âŒ Lá»—i há»‡ thá»‘ng: ' + error.message);
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Sai tÃ i khoáº£n hoáº·c máº­t kháº©u!' });
+    }
+
+    const user = result.rows[0];
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Sai tÃ i khoáº£n hoáº·c máº­t kháº©u!' });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET || 'DoAn_WMS_Secret_2026',
+      { expiresIn: '1d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'ÄÄƒng nháº­p thÃ nh cÃ´ng!',
+      token: token,
+      user: {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        role: user.role,
+        level: user.level
+      }
+    });
+
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ success: false, message: 'Lá»—i mÃ¡y chá»§!' });
+  }
+});
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`=========================================`);
+  console.log(`ðŸš€ Server is running on port ${PORT}`);
+  console.log(`=========================================`);
+});
+</file>
