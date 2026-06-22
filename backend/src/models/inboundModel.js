@@ -107,10 +107,10 @@ const addInboundDetail = async (receiptId, productId, locationId, quantity) => {
  */
 const updateInventory = async (productId, warehouseId, quantityToAdd) => {
   const result = await db.query(
-    `INSERT INTO inventory (product_id, warehouse_id, quantity, updated_at) 
-     VALUES ($1, $2, $3, NOW())
+    `INSERT INTO inventory (product_id, warehouse_id, quantity) 
+     VALUES ($1, $2, $3)
      ON CONFLICT (product_id, warehouse_id) 
-     DO UPDATE SET quantity = inventory.quantity + $3, updated_at = NOW()
+     DO UPDATE SET quantity = inventory.quantity + $3
      RETURNING quantity`,
     [productId, warehouseId, quantityToAdd]
   );
@@ -123,7 +123,7 @@ const updateInventory = async (productId, warehouseId, quantityToAdd) => {
 const occupyBin = async (locationId, productId, quantity) => {
   await db.query(
     `UPDATE locations 
-     SET status = 'FULL', product_id = $1, current_qty = $2, updated_at = NOW() 
+     SET status = 'FULL', product_id = $1, current_qty = $2 
      WHERE id = $3`,
     [productId, quantity, locationId]
   );
@@ -153,8 +153,8 @@ const getInboundReceiptDetails = async (receiptId) => {
   const result = await db.query(
     `SELECT id_item.id as detail_id, id_item.receipt_id, id_item.product_id, id_item.location_id, 
             id_item.quantity,
-            p.sku, p.name as product_name, p.category_code, p.brand_code,
-            l.location_code, l.zone_code, l.aisle, l.rack, l.shelf, l.bin
+            p.sku, p.name AS productName, p.category_code, p.brand_code,
+            l.location_code AS locationCode, l.zone_code AS zoneCode, l.aisle, l.rack, l.shelf, l.bin
      FROM inbound_details id_item
      JOIN products p ON id_item.product_id = p.id
      JOIN locations l ON id_item.location_id = l.id

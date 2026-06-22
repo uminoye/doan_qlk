@@ -690,9 +690,9 @@ function Inbound() {
                         {zone.items.map((item, idx) => (
                           <tr key={idx} style={{ borderBottom: idx < zone.items.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
                             <td style={{ padding: '8px 0', fontSize: '13px', color: '#1e293b', fontWeight: 'bold' }}>{item.sku}</td>
-                            <td style={{ padding: '8px 0', fontSize: '13px', color: '#64748b' }}>{item.product_name}</td>
+                            <td style={{ padding: '8px 0', fontSize: '13px', color: '#64748b' }}>{item.productName}</td>
                             <td style={{ padding: '8px 0', fontSize: '13px', color: '#1e293b', textAlign: 'center', fontWeight: 'bold' }}>{item.quantity}</td>
-                            <td style={{ padding: '8px 0', fontSize: '12px', color: '#10b981', fontFamily: 'monospace' }}>{item.location_code}</td>
+                            <td style={{ padding: '8px 0', fontSize: '12px', color: '#10b981', fontFamily: 'monospace' }}>{item.locationCode}</td>
                           </tr>
                         ))}
                       </tbody>
