@@ -236,11 +236,13 @@ function Products() {
 
             {/* Main Container Components (Card-Grid View Mode) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '24px' }}>
-                {filteredProducts.map((p) => (
+                {filteredProducts.map((p) => {
+                    const isOutOfStock = (p.inventory || 0) === 0;
+                    return (
                     <div key={p.id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', position: 'relative', display: 'flex', flexDirection: 'column', border: '1px solid #f1f5f9' }}>
 
-                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
-                            Còn hàng
+                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: isOutOfStock ? '#fee2e2' : '#ecfdf5', color: isOutOfStock ? '#dc2626' : '#059669', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
+                            {isOutOfStock ? 'Hết hàng' : 'Còn hàng'}
                         </div>
                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
                             {p.category_code}
@@ -275,8 +277,8 @@ function Products() {
                                     <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>/ {p.unit || 'Cái'}</div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <div style={{ color: '#0f172a', fontWeight: 'bold', fontSize: '16px' }}>0</div>
-                                    <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>Tôn kho</div>
+                                    <div style={{ color: isOutOfStock ? '#dc2626' : '#0f172a', fontWeight: 'bold', fontSize: '16px' }}>{p.inventory || 0}</div>
+                                    <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>Tồn kho</div>
                                 </div>
                             </div>
 
@@ -288,7 +290,8 @@ function Products() {
                             )}
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Floating System Modal Box Framework */}
