@@ -18,7 +18,8 @@ function App() {
         {/* Bọc Layout ra bên ngoài các trang dùng chung */}
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Dashboard />} />
-          <Route path="/warehouse" element={<Warehouse />} /> {/* THÊM DÒNG NÀY */}
+          <Route path="/warehouse" element={<Warehouse />} />
+          <Route path="/products" element={<Products />} /> {/* THÊM DÒNG NÀY */}
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />
