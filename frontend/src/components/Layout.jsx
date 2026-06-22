@@ -27,6 +27,7 @@ function Layout() {
   // Danh sách Menu thông minh (Chỉ hiện khi user có role phù hợp)
   const menuItems = [
     { path: '/', name: 'Tổng quan', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'SALES', 'KHO', 'LOGISTICS', 'NHAMAY'] },
+    { path: '/products', name: 'Sản phẩm', icon: <Tag size={20} />, roles: ['ADMIN', 'KHO', 'SALES'] },
     { path: '/sales', name: 'Kinh doanh', icon: <ShoppingCart size={20} />, roles: ['ADMIN', 'SALES'] },
     { path: '/warehouse', name: 'Kho vận', icon: <Package size={20} />, roles: ['ADMIN', 'KHO'] },
     { path: '/logistics', name: 'Vận chuyển', icon: <Truck size={20} />, roles: ['ADMIN', 'LOGISTICS'] },
