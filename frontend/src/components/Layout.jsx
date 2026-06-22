@@ -1,5 +1,5 @@
 import { useNavigate, Outlet, Link, Navigate } from 'react-router-dom'; // Bổ sung công cụ Navigate ở đây
-import { LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, LogOut, UserCircle } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Truck, Factory, Settings, LogOut, UserCircle, Tag } from 'lucide-react';
 
 function Layout() {
   const navigate = useNavigate();
