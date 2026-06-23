@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Home } from 'lucide-react';
 
 // CHÚ Ý: Đổi link này khi đẩy lên Render nhé
-const API_BASE = 'http://localhost:5000/api'; 
+const API_BASE = 'http://localhost:5000/api';
 
 const categoryConfig = {
     TV: {
@@ -94,7 +94,7 @@ function Products() {
             ]);
             const prodData = await prodRes.json();
             const whData = await whRes.json();
-            
+
             if (prodData.success) setProducts(prodData.products);
             if (whData.success) setWarehouses(whData.warehouses);
         } catch (error) {
@@ -177,17 +177,28 @@ function Products() {
             const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
             const method = editingId ? 'PUT' : 'POST';
 
+            // 💡 CHÌA KHÓA Ở ĐÂY: Nhét thêm biến sku vào gói dữ liệu trước khi gửi đi
+            const dataToSend = {
+                ...formData,
+                sku: editingId ? products.find(p => p.id === editingId)?.sku : skuPreview
+            };
+
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(dataToSend) // Gửi dataToSend thay vì formData cũ
             });
+
             const data = await response.json();
             if (data.success) {
                 fetchData();
                 setIsModalOpen(false);
             } else alert('Lỗi biểu mẫu: ' + data.message);
-        } catch (error) { alert('Lỗi kết nối cơ sở dữ liệu!'); } finally { setLoading(false); }
+        } catch (error) {
+            alert('Lỗi kết nối cơ sở dữ liệu!');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Tạo Kho Mới
@@ -321,12 +332,12 @@ function Products() {
                         </p>
                         <form onSubmit={handleCreateWarehouse}>
                             <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Tên Kho *</label>
-                            <input 
+                            <input
                                 required autoFocus
-                                value={newWarehouseName} 
-                                onChange={(e) => setNewWarehouseName(e.target.value)} 
-                                style={{ width: '100%', padding: '10px', marginTop: '6px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }} 
-                                placeholder="VD: Kho Tổng Dĩ An..." 
+                                value={newWarehouseName}
+                                onChange={(e) => setNewWarehouseName(e.target.value)}
+                                style={{ width: '100%', padding: '10px', marginTop: '6px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }}
+                                placeholder="VD: Kho Tổng Dĩ An..."
                             />
                             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setIsWhModalOpen(false)} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Hủy</button>

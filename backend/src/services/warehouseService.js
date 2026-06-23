@@ -1,6 +1,6 @@
-const db = require('../models/db'); // Đường dẫn chuẩn trỏ tới file cấu hình DB của em
+const db = require('../models/db'); // Đường dẫn trỏ tới DB
 
-// Lấy danh sách tất cả các kho
+// 1. Hàm lấy danh sách kho
 const getWarehouses = async () => {
   try {
     const result = await db.query('SELECT * FROM warehouses ORDER BY id DESC');
@@ -10,22 +10,25 @@ const getWarehouses = async () => {
   }
 };
 
-// Tạo kho mới + Tự động sinh 3000 kệ (Khu A, B, C)
+// 2. Hàm tạo kho mới + Tự động sinh kệ
 const addWarehouseWithLocations = async (warehouseData) => {
   try {
     await db.query('BEGIN'); // Mở Giao dịch (Transaction)
 
-    const { name } = warehouseData; // Chỉ lấy name, bỏ address
+    const { name } = warehouseData;
     
-    // 1. Tạo kho mới (Đã bỏ cột address)
+    // Tự động tạo Mã kho ngẫu nhiên (Ví dụ: WH-123456)
+    const warehouse_code = 'WH-' + Math.floor(100000 + Math.random() * 900000);
+
+    // Tạo kho mới (Thêm cột warehouse_code)
     const insertWhQuery = `
-      INSERT INTO warehouses (name) 
-      VALUES ($1) RETURNING *
+      INSERT INTO warehouses (warehouse_code, name) 
+      VALUES ($1, $2) RETURNING *
     `;
-    const whResult = await db.query(insertWhQuery, [name]); 
+    const whResult = await db.query(insertWhQuery, [warehouse_code, name]); 
     const newWarehouse = whResult.rows[0];
 
-    // 2. Sinh 3000 kệ tự động cho kho này
+    // Sinh 3000 kệ tự động cho kho này
     const generateLocationsQuery = `
       INSERT INTO locations (warehouse_id, zone_code, bin_code)
       SELECT 
@@ -42,11 +45,12 @@ const addWarehouseWithLocations = async (warehouseData) => {
     return newWarehouse;
 
   } catch (error) {
-    await db.query('ROLLBACK'); // Lỗi thì hoàn tác, không sinh ra rác
+    await db.query('ROLLBACK'); // Lỗi thì hoàn tác
     throw new Error('Lỗi Database khi tạo kho: ' + error.message);
   }
 };
 
+// ĐÂY CHÍNH LÀ NƠI GÂY RA LỖI NẾU THIẾU NÈ:
 module.exports = {
   getWarehouses,
   addWarehouseWithLocations
