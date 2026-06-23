@@ -2,75 +2,57 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Home } from 'lucide-react';
 
 const API_BASE = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000/api'               // Nếu chạy ở máy nhà -> Gọi Localhost
-  : 'https://doan-qlk.onrender.com/api';      // Nếu chạy trên Vercel -> Gọi Render
+  ? 'http://localhost:5000/api'
+  : 'https://doan-qlk.onrender.com/api';
 
 const categoryConfig = {
     TV: {
         name: 'Tivi',
         brands: [
-            { code: 'SN', name: 'Sony' },
-            { code: 'SS', name: 'Samsung' },
-            { code: 'LG', name: 'LG' },
-            { code: 'TC', name: 'TCL' }
+            { code: 'SN', name: 'Sony' }, { code: 'SS', name: 'Samsung' },
+            { code: 'LG', name: 'LG' }, { code: 'TC', name: 'TCL' }
         ],
-        unit: 'Cái',
-        sizeLabel: 'Kích thước (inch)',
-        sizeUnit: 'inch',
-        sizeHint: 'VD: 55'
+        unit: 'Cái', sizeLabel: 'Kích thước (inch)', sizeUnit: 'inch', sizeHint: 'VD: 55'
     },
     TL: {
         name: 'Tủ Lạnh',
         brands: [
-            { code: 'PNS', name: 'Panasonic' },
-            { code: 'AQ', name: 'Aqua' },
-            { code: 'TSB', name: 'Toshiba' },
-            { code: 'HTC', name: 'Hitachi' }
+            { code: 'PNS', name: 'Panasonic' }, { code: 'AQ', name: 'Aqua' },
+            { code: 'TSB', name: 'Toshiba' }, { code: 'HTC', name: 'Hitachi' }
         ],
-        unit: 'Cái',
-        sizeLabel: 'Dung tích (Lít)',
-        sizeUnit: 'L',
-        sizeHint: 'VD: 400'
+        unit: 'Cái', sizeLabel: 'Dung tích (Lít)', sizeUnit: 'L', sizeHint: 'VD: 400'
     },
     MG: {
         name: 'Máy Giặt',
         brands: [
-            { code: 'EL', name: 'Electrolux' },
-            { code: 'LG', name: 'LG' },
-            { code: 'TSB', name: 'Toshiba' },
-            { code: 'AQ', name: 'Aqua' }
+            { code: 'EL', name: 'Electrolux' }, { code: 'LG', name: 'LG' },
+            { code: 'TSB', name: 'Toshiba' }, { code: 'AQ', name: 'Aqua' }
         ],
-        unit: 'Cái',
-        sizeLabel: 'Khối lượng (Kg)',
-        sizeUnit: 'Kg',
-        sizeHint: 'VD: 9',
-        hasTypeDetail: true
+        unit: 'Cái', sizeLabel: 'Khối lượng (Kg)', sizeUnit: 'Kg', sizeHint: 'VD: 9', hasTypeDetail: true
     },
     ML: {
         name: 'Máy Lạnh',
         brands: [
-            { code: 'DK', name: 'Daikin' },
-            { code: 'PNS', name: 'Panasonic' },
-            { code: 'CP', name: 'Casper' },
-            { code: 'SP', name: 'Sharp' }
+            { code: 'DK', name: 'Daikin' }, { code: 'PNS', name: 'Panasonic' },
+            { code: 'CP', name: 'Casper' }, { code: 'SP', name: 'Sharp' }
         ],
-        unit: 'Bộ',
-        sizeLabel: 'Công suất (HP)',
-        sizeUnit: 'HP',
-        sizeHint: 'VD: 1.5'
+        unit: 'Bộ', sizeLabel: 'Công suất (HP)', sizeUnit: 'HP', sizeHint: 'VD: 1.5'
     }
 };
 
 function Products() {
     const [products, setProducts] = useState([]);
-    const [warehouses, setWarehouses] = useState([]); // State lưu danh sách kho
+    const [warehouses, setWarehouses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isWhModalOpen, setIsWhModalOpen] = useState(false); // Modal thêm kho
+    const [isWhModalOpen, setIsWhModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('ALL');
+    
+    // State cho Modal Thêm Kho
     const [newWarehouseName, setNewWarehouseName] = useState('');
+    const [newWarehouseCapacity, setNewWarehouseCapacity] = useState(200);
 
     const userString = localStorage.getItem('user');
     const currentUser = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
@@ -86,26 +68,20 @@ function Products() {
 
     const [skuPreview, setSkuPreview] = useState('SP001');
 
-    // Load Dữ liệu Sản phẩm và Kho
     const fetchData = async () => {
         try {
             const [prodRes, whRes] = await Promise.all([
-                fetch(`${API_BASE}/products`),
-                fetch(`${API_BASE}/warehouses`)
+                fetch(`${API_BASE}/products`), fetch(`${API_BASE}/warehouses`)
             ]);
             const prodData = await prodRes.json();
             const whData = await whRes.json();
-
             if (prodData.success) setProducts(prodData.products);
             if (whData.success) setWarehouses(whData.warehouses);
-        } catch (error) {
-            console.error('Lỗi khi tải dữ liệu:', error);
-        }
+        } catch (error) { console.error('Lỗi khi tải dữ liệu:', error); }
     };
 
     useEffect(() => { fetchData(); }, []);
 
-    // Tự động tính SKU preview
     useEffect(() => {
         const cat = categoryConfig[formData.category_code];
         if (!cat) return;
@@ -121,12 +97,8 @@ function Products() {
         if (name === 'category_code') {
             const selectedCategory = categoryConfig[value];
             setFormData({
-                ...formData,
-                category_code: value,
-                brand_code: selectedCategory.brands[0].code,
-                size_or_capacity: '',
-                type_detail: '',
-                unit: selectedCategory.unit
+                ...formData, category_code: value, brand_code: selectedCategory.brands[0].code,
+                size_or_capacity: '', type_detail: '', unit: selectedCategory.unit
             });
         } else {
             setFormData({ ...formData, [name]: value });
@@ -134,16 +106,11 @@ function Products() {
     };
 
     const openAddModal = () => {
-        if (warehouses.length === 0) {
-            alert('Bạn chưa có Kho hàng nào! Vui lòng tạo kho trước khi thêm sản phẩm.');
-            return;
-        }
+        if (warehouses.length === 0) return alert('Bạn chưa có Kho hàng nào! Vui lòng tạo kho trước.');
         setEditingId(null);
         setFormData({
-            name: '', category_code: 'TV', brand_code: 'SN',
-            size_or_capacity: '', type_detail: '', unit: 'Cái',
-            sale_price: '', image_url: '', inventory: 0,
-            warehouse_id: warehouses[0].id // Tự động chọn kho đầu tiên
+            name: '', category_code: 'TV', brand_code: 'SN', size_or_capacity: '', type_detail: '', unit: 'Cái',
+            sale_price: '', image_url: '', inventory: 0, warehouse_id: warehouses[0].id
         });
         setIsModalOpen(true);
     };
@@ -162,47 +129,32 @@ function Products() {
     const handleDelete = async (id, name) => {
         if (window.confirm(`Xác nhận xóa sản phẩm: "${name}" vĩnh viễn?`)) {
             try {
-                const response = await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' });
-                const data = await response.json();
+                const res = await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' });
+                const data = await res.json();
                 if (data.success) fetchData();
                 else alert('Lỗi hệ thống: ' + data.message);
-            } catch (error) { alert('Lỗi kết nối máy chủ!'); }
+            } catch (error) { alert('Lỗi máy chủ!'); }
         }
     };
 
-    // Lưu Sản Phẩm
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
             const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
             const method = editingId ? 'PUT' : 'POST';
-
-            // 💡 CHÌA KHÓA Ở ĐÂY: Nhét thêm biến sku vào gói dữ liệu trước khi gửi đi
-            const dataToSend = {
-                ...formData,
-                sku: editingId ? products.find(p => p.id === editingId)?.sku : skuPreview
-            };
+            const dataToSend = { ...formData, sku: editingId ? products.find(p => p.id === editingId)?.sku : skuPreview };
 
             const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToSend) // Gửi dataToSend thay vì formData cũ
+                method: method, headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend)
             });
-
             const data = await response.json();
-            if (data.success) {
-                fetchData();
-                setIsModalOpen(false);
-            } else alert('Lỗi biểu mẫu: ' + data.message);
-        } catch (error) {
-            alert('Lỗi kết nối cơ sở dữ liệu!');
-        } finally {
-            setLoading(false);
-        }
+            if (data.success) { fetchData(); setIsModalOpen(false); }
+            else alert('Lỗi biểu mẫu: ' + data.message);
+        } catch (error) { alert('Lỗi kết nối cơ sở dữ liệu!'); } finally { setLoading(false); }
     };
 
-    // Tạo Kho Mới
     const handleCreateWarehouse = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -210,37 +162,30 @@ function Products() {
             const response = await fetch(`${API_BASE}/warehouses`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newWarehouseName })
+                body: JSON.stringify({ name: newWarehouseName, capacity: newWarehouseCapacity }) // Gửi kèm số kệ
             });
             const data = await response.json();
             if (data.success) {
-                alert(data.message); // Hiển thị thông báo kho đã tạo + 3000 kệ
+                alert(`🎉 Tạo kho thành công! Hệ thống đã setup sẵn ${newWarehouseCapacity * 16} kệ.`);
                 setNewWarehouseName('');
+                setNewWarehouseCapacity(200);
                 setIsWhModalOpen(false);
-                fetchData(); // Tải lại danh sách kho
-            } else {
-                alert('Lỗi tạo kho: ' + data.message);
-            }
-        } catch (error) {
-            alert('Lỗi kết nối khi tạo kho!');
-        } finally {
-            setLoading(false);
-        }
+                fetchData();
+            } else alert('Lỗi tạo kho: ' + data.message);
+        } catch (error) { alert('Lỗi kết nối!'); } finally { setLoading(false); }
     };
 
     const filteredProducts = products.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase());
-        if (filterType === 'OUT_OF_STOCK') return matchesSearch && Number(p.inventory) === 0;
-        if (filterType === 'LOW_STOCK') return matchesSearch && Number(p.inventory) > 0 && Number(p.inventory) < 10;
-        return matchesSearch;
+        const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+        if (filterType === 'OUT_OF_STOCK') return matchSearch && Number(p.inventory) === 0;
+        if (filterType === 'LOW_STOCK') return matchSearch && Number(p.inventory) > 0 && Number(p.inventory) < 10;
+        return matchSearch;
     });
 
     const currentCategory = categoryConfig[formData.category_code];
 
     return (
         <div style={{ padding: '24px', fontFamily: 'Arial', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-
-            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
                     <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold' }}>Quản lý sản phẩm</h2>
@@ -248,14 +193,11 @@ function Products() {
                         {products.length} sản phẩm | {warehouses.length} kho hàng hoạt động
                     </p>
                 </div>
-
                 {canEdit && (
                     <div style={{ display: 'flex', gap: '12px' }}>
-                        {/* NÚT THÊM KHO MỚI */}
                         <button onClick={() => setIsWhModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' }}>
                             <Home size={18} /> Thêm kho mới
                         </button>
-
                         <button onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)' }}>
                             <Plus size={18} /> Thêm sản phẩm
                         </button>
@@ -263,7 +205,6 @@ function Products() {
                 )}
             </div>
 
-            {/* Thanh Tìm kiếm */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                 <div style={{ position: 'relative', width: '320px' }}>
                     <Search size={18} color="#94a3b8" style={{ position: 'absolute', top: '11px', left: '12px' }} />
@@ -274,7 +215,6 @@ function Products() {
                 <button onClick={() => setFilterType('OUT_OF_STOCK')} style={{ padding: '8px 16px', background: filterType === 'OUT_OF_STOCK' ? '#10b981' : 'white', color: filterType === 'OUT_OF_STOCK' ? 'white' : '#334155', border: filterType === 'OUT_OF_STOCK' ? 'none' : '1px solid #e2e8f0', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Hết hàng</button>
             </div>
 
-            {/* Lưới Sản phẩm */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '24px' }}>
                 {filteredProducts.map((p) => {
                     const isOutOfStock = (p.inventory || 0) === 0;
@@ -321,25 +261,36 @@ function Products() {
                 })}
             </div>
 
-            {/* MODAL THÊM KHO */}
+            {/* MODAL THÊM KHO ĐÃ ĐƯỢC NÂNG CẤP */}
             {isWhModalOpen && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-                    <div style={{ background: 'white', padding: '24px', borderRadius: '16px', width: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+                    <div style={{ background: 'white', padding: '24px', borderRadius: '16px', width: '420px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
                         <h3 style={{ margin: '0 0 20px 0', color: '#3b82f6', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Home size={20} /> Tạo Kho Hàng Mới
                         </h3>
-                        <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '16px', lineHeight: '1.5' }}>
-                            Sau khi tạo kho, hệ thống sẽ <b>tự động khởi tạo 3000 vị trí kệ</b> (Zone A, B, C) cho kho này. Quá trình này diễn ra tự động.
-                        </p>
                         <form onSubmit={handleCreateWarehouse}>
                             <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Tên Kho *</label>
                             <input
                                 required autoFocus
                                 value={newWarehouseName}
                                 onChange={(e) => setNewWarehouseName(e.target.value)}
-                                style={{ width: '100%', padding: '10px', marginTop: '6px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }}
+                                style={{ width: '100%', padding: '10px', marginTop: '6px', marginBottom: '16px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }}
                                 placeholder="VD: Kho Tổng Dĩ An..."
                             />
+                            
+                            <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Sức chứa mỗi khu vực (Số kệ) *</label>
+                            <input
+                                type="number" required min="10" max="5000"
+                                value={newWarehouseCapacity}
+                                onChange={(e) => setNewWarehouseCapacity(e.target.value)}
+                                style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }}
+                                placeholder="Nhập số kệ mong muốn..."
+                            />
+                            
+                            <div style={{ background: '#eff6ff', color: '#1d4ed8', padding: '12px', borderRadius: '8px', fontSize: '12px', marginTop: '12px', marginBottom: '20px' }}>
+                                💡 Hệ thống có 16 khu vực lưu trữ chuyên biệt (Sony, Samsung, Aqua...). Tổng số kệ sẽ tạo ra là: <strong>{newWarehouseCapacity * 16} kệ</strong>.
+                            </div>
+
                             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setIsWhModalOpen(false)} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Hủy</button>
                                 <button type="submit" disabled={loading} style={{ padding: '10px 24px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
@@ -351,7 +302,7 @@ function Products() {
                 </div>
             )}
 
-            {/* MODAL THÊM SẢN PHẨM */}
+            {/* MODAL THÊM SẢN PHẨM GIỮ NGUYÊN */}
             {isModalOpen && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
                     <div style={{ background: 'white', padding: '24px', borderRadius: '16px', width: '480px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
@@ -428,7 +379,6 @@ function Products() {
                                 </div>
                             </div>
 
-                            {/* CHỖ NÀY ĐÃ ĐƯỢC NÂNG CẤP ĐỂ TỰ ĐỘNG HIỂN THỊ DANH SÁCH KHO TỪ DATABASE */}
                             <div>
                                 <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Lưu tại Kho hàng *</label><br />
                                 <select required name="warehouse_id" value={formData.warehouse_id} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '13px' }}>

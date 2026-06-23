@@ -154,7 +154,9 @@ export default Layout;
 import { useState, useEffect } from 'react';
 import { UserPlus, Users, RefreshCw, MapPin, Phone, ShieldAlert } from 'lucide-react';
 
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Náº¿u cháº¡y á»Ÿ mÃ¡y nhÃ  -> Gá»i Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Náº¿u cháº¡y trÃªn Vercel -> Gá»i Render
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -308,7 +310,9 @@ export default Customers;
 import { useState, useEffect } from 'react';
 import { Package, Tags, ArrowDownToLine, Database, RefreshCw, Activity, CheckCircle2 } from 'lucide-react';
 
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Náº¿u cháº¡y á»Ÿ mÃ¡y nhÃ  -> Gá»i Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Náº¿u cháº¡y trÃªn Vercel -> Gá»i Render
 
 function Dashboard() {
   const [stats, setStats] = useState({
@@ -529,8 +533,9 @@ import {
   ClipboardList, Check, CheckCircle2
 } from 'lucide-react';
 
-// API Base URL
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Náº¿u cháº¡y á»Ÿ mÃ¡y nhÃ  -> Gá»i Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Náº¿u cháº¡y trÃªn Vercel -> Gá»i Render
 
 // Mapping Zone Code -> TÃªn hiá»ƒn thá»‹
 const zoneConfig = {
@@ -1348,19 +1353,25 @@ export default Inbound;
 </file>
 <file name="Login.jsx">
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Bá»• sung cÃ´ng cá»¥ chuyá»ƒn trang
+import { useNavigate } from 'react-router-dom';
+
+// Há»‡ thá»‘ng tá»± Ä‘á»™ng quÃ©t xem trang web Ä‘ang cháº¡y á»Ÿ Ä‘Ã¢u Ä‘á»ƒ gá»i Ä‘Ãºng API
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://doan-qlk.onrender.com/api';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
-  const navigate = useNavigate(); // Khá»Ÿi táº¡o cÃ´ng cá»¥
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://doan-qlk.onrender.com/api/auth/login', {
+      // ÄÃ£ thay link cá»©ng báº±ng API_BASE tá»± Ä‘á»™ng
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -1420,7 +1431,10 @@ export default Login;
 import { useState, useEffect } from 'react';
 import { Truck, Plus, ClipboardList, CheckCircle2, RefreshCw, X, PackageOpen } from 'lucide-react';
 
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+// Há»‡ thá»‘ng tá»± Ä‘á»™ng quÃ©t xem trang web Ä‘ang cháº¡y á»Ÿ Ä‘Ã¢u
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Náº¿u cháº¡y á»Ÿ mÃ¡y nhÃ  -> Gá»i Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Náº¿u cháº¡y trÃªn Vercel -> Gá»i Render
 
 function Outbound() {
   const [activeTab, setActiveTab] = useState('create');
@@ -1624,14 +1638,12 @@ export default Outbound;
 </file>
 <file name="Products.jsx">
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Home } from 'lucide-react';
 
-// ðŸ‘‰ CHá»ˆ Cáº¦N Sá»¬A ÄÃšNG 1 DÃ’NG NÃ€Y KHI MUá»N Äá»”I LINK SERVER
-// Khi test á»Ÿ mÃ¡y: dÃ¹ng 'http://localhost:5000/api'
-// Khi ná»™p bÃ¡o cÃ¡o: dÃ¹ng 'https://doan-qlk.onrender.com/api'
-const API_BASE = 'http://localhost:5000/api'; 
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Náº¿u cháº¡y á»Ÿ mÃ¡y nhÃ  -> Gá»i Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Náº¿u cháº¡y trÃªn Vercel -> Gá»i Render
 
-// Configuration for category, brand linkage and dynamic units
 const categoryConfig = {
     TV: {
         name: 'Tivi',
@@ -1690,61 +1702,57 @@ const categoryConfig = {
 
 function Products() {
     const [products, setProducts] = useState([]);
+    const [warehouses, setWarehouses] = useState([]); // State lÆ°u danh sÃ¡ch kho
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isWhModalOpen, setIsWhModalOpen] = useState(false); // Modal thÃªm kho
     const [editingId, setEditingId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('ALL');
+    const [newWarehouseName, setNewWarehouseName] = useState('');
 
-    // Authorization setup from local storage
     const userString = localStorage.getItem('user');
     const currentUser = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
     const userRole = currentUser?.role || '';
     const canEdit = userRole === 'ADMIN' || userRole === 'KHO';
     const canDelete = userRole === 'ADMIN';
 
-    // Form states matching structural database requirements
     const [formData, setFormData] = useState({
         name: '', category_code: 'TV', brand_code: 'SN', size_or_capacity: '',
         type_detail: '', unit: 'CÃ¡i', sale_price: '', image_url: '',
-        inventory: 0, warehouse_id: 1
+        inventory: 0, warehouse_id: ''
     });
 
-    // SKU Preview state
     const [skuPreview, setSkuPreview] = useState('SP001');
-    const [nextSequence, setNextSequence] = useState(1);
 
-    const fetchProducts = async () => {
+    // Load Dá»¯ liá»‡u Sáº£n pháº©m vÃ  Kho
+    const fetchData = async () => {
         try {
-            const response = await fetch(`${API_BASE}/products`);
-            const data = await response.json();
-            if (data.success) setProducts(data.products);
+            const [prodRes, whRes] = await Promise.all([
+                fetch(`${API_BASE}/products`),
+                fetch(`${API_BASE}/warehouses`)
+            ]);
+            const prodData = await prodRes.json();
+            const whData = await whRes.json();
+
+            if (prodData.success) setProducts(prodData.products);
+            if (whData.success) setWarehouses(whData.warehouses);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Lá»—i khi táº£i dá»¯ liá»‡u:', error);
         }
     };
 
-    useEffect(() => { fetchProducts(); }, []);
+    useEffect(() => { fetchData(); }, []);
 
-    // TÃ­nh SKU preview khi thay Ä‘á»•i category, brand hoáº·c size
+    // Tá»± Ä‘á»™ng tÃ­nh SKU preview
     useEffect(() => {
-        const calculateSkuPreview = () => {
-            const cat = categoryConfig[formData.category_code];
-            if (!cat) return 'SP001';
-
-            // Äáº¿m sá»‘ sáº£n pháº©m cÃ¹ng loáº¡i Ä‘á»ƒ táº¡o sequence
-            const sameTypeProducts = products.filter(p => p.category_code === formData.category_code);
-            const nextSeq = sameTypeProducts.length + 1;
-            setNextSequence(nextSeq);
-
-            // Format: [MÃ£ loáº¡i]-[MÃ£ hÃ£ng]-[KÃ­ch thÆ°á»›c]-[STT]
-            const seqStr = nextSeq.toString().padStart(3, '0');
-            const sizeStr = formData.size_or_capacity ? `-${formData.size_or_capacity}` : '';
-            const preview = `${formData.category_code}-${formData.brand_code}${sizeStr}-${seqStr}`;
-            setSkuPreview(preview);
-        };
-
-        calculateSkuPreview();
+        const cat = categoryConfig[formData.category_code];
+        if (!cat) return;
+        const sameTypeProducts = products.filter(p => p.category_code === formData.category_code);
+        const nextSeq = sameTypeProducts.length + 1;
+        const seqStr = nextSeq.toString().padStart(3, '0');
+        const sizeStr = formData.size_or_capacity ? `-${formData.size_or_capacity}` : '';
+        setSkuPreview(`${formData.category_code}-${formData.brand_code}${sizeStr}-${seqStr}`);
     }, [formData.category_code, formData.brand_code, formData.size_or_capacity, products]);
 
     const handleChange = (e) => {
@@ -1765,11 +1773,16 @@ function Products() {
     };
 
     const openAddModal = () => {
+        if (warehouses.length === 0) {
+            alert('Báº¡n chÆ°a cÃ³ Kho hÃ ng nÃ o! Vui lÃ²ng táº¡o kho trÆ°á»›c khi thÃªm sáº£n pháº©m.');
+            return;
+        }
         setEditingId(null);
         setFormData({
             name: '', category_code: 'TV', brand_code: 'SN',
             size_or_capacity: '', type_detail: '', unit: 'CÃ¡i',
-            sale_price: '', image_url: ''
+            sale_price: '', image_url: '', inventory: 0,
+            warehouse_id: warehouses[0].id // Tá»± Ä‘á»™ng chá»n kho Ä‘áº§u tiÃªn
         });
         setIsModalOpen(true);
     };
@@ -1780,51 +1793,84 @@ function Products() {
             name: p.name, category_code: p.category_code, brand_code: p.brand_code,
             size_or_capacity: p.size_or_capacity || '', type_detail: p.type_detail || '',
             unit: p.unit || 'CÃ¡i', sale_price: p.sale_price, image_url: p.image_url || '',
-            inventory: p.inventory || 0, warehouse_id: p.warehouse_id || 1
+            inventory: p.inventory || 0, warehouse_id: p.warehouse_id || (warehouses[0]?.id || '')
         });
         setIsModalOpen(true);
     };
 
     const handleDelete = async (id, name) => {
-        if (window.confirm(`XÃ¡c nháº­n xÃ³a sáº£n pháº©m: "${name}" vÄ©nh viá»…n khá»i danh má»¥c?`)) {
+        if (window.confirm(`XÃ¡c nháº­n xÃ³a sáº£n pháº©m: "${name}" vÄ©nh viá»…n?`)) {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/products/${id}`, {
-                    method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const response = await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' });
                 const data = await response.json();
-                if (data.success) fetchProducts();
+                if (data.success) fetchData();
                 else alert('Lá»—i há»‡ thá»‘ng: ' + data.message);
             } catch (error) { alert('Lá»—i káº¿t ná»‘i mÃ¡y chá»§!'); }
         }
     };
 
+    // LÆ°u Sáº£n Pháº©m
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
             const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
             const method = editingId ? 'PUT' : 'POST';
 
+            // ðŸ’¡ CHÃŒA KHÃ“A á»ž ÄÃ‚Y: NhÃ©t thÃªm biáº¿n sku vÃ o gÃ³i dá»¯ liá»‡u trÆ°á»›c khi gá»­i Ä‘i
+            const dataToSend = {
+                ...formData,
+                sku: editingId ? products.find(p => p.id === editingId)?.sku : skuPreview
+            };
+
             const response = await fetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(formData)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend) // Gá»­i dataToSend thay vÃ¬ formData cÅ©
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                fetchData();
+                setIsModalOpen(false);
+            } else alert('Lá»—i biá»ƒu máº«u: ' + data.message);
+        } catch (error) {
+            alert('Lá»—i káº¿t ná»‘i cÆ¡ sá»Ÿ dá»¯ liá»‡u!');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Táº¡o Kho Má»›i
+    const handleCreateWarehouse = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE}/warehouses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newWarehouseName })
             });
             const data = await response.json();
             if (data.success) {
-                fetchProducts();
-                setIsModalOpen(false);
-            } else alert('Lá»—i biá»ƒu máº«u: ' + data.message);
-        } catch (error) { alert('Lá»—i káº¿t ná»‘i cÆ¡ sá»Ÿ dá»¯ liá»‡u!'); } finally { setLoading(false); }
+                alert(data.message); // Hiá»ƒn thá»‹ thÃ´ng bÃ¡o kho Ä‘Ã£ táº¡o + 3000 ká»‡
+                setNewWarehouseName('');
+                setIsWhModalOpen(false);
+                fetchData(); // Táº£i láº¡i danh sÃ¡ch kho
+            } else {
+                alert('Lá»—i táº¡o kho: ' + data.message);
+            }
+        } catch (error) {
+            alert('Lá»—i káº¿t ná»‘i khi táº¡o kho!');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Searching and Filtering Data Logic
     const filteredProducts = products.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase());
-        if (filterType === 'OUT_OF_STOCK') return matchesSearch && false; // Integration placeholder for real balances
-        if (filterType === 'LOW_STOCK') return matchesSearch && false;
+        if (filterType === 'OUT_OF_STOCK') return matchesSearch && Number(p.inventory) === 0;
+        if (filterType === 'LOW_STOCK') return matchesSearch && Number(p.inventory) > 0 && Number(p.inventory) < 10;
         return matchesSearch;
     });
 
@@ -1833,80 +1879,66 @@ function Products() {
     return (
         <div style={{ padding: '24px', fontFamily: 'Arial', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
 
-            {/* Upper Management Header Section */}
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
                     <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold' }}>Quáº£n lÃ½ sáº£n pháº©m</h2>
-                    <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>{products.length} sáº£n pháº©m trong há»‡ thá»‘ng</p>
+                    <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>
+                        {products.length} sáº£n pháº©m | {warehouses.length} kho hÃ ng hoáº¡t Ä‘á»™ng
+                    </p>
                 </div>
 
                 {canEdit && (
-                    <button onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)' }}>
-                        <Plus size={18} /> ThÃªm sáº£n pháº©m
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        {/* NÃšT THÃŠM KHO Má»šI */}
+                        <button onClick={() => setIsWhModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' }}>
+                            <Home size={18} /> ThÃªm kho má»›i
+                        </button>
+
+                        <button onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)' }}>
+                            <Plus size={18} /> ThÃªm sáº£n pháº©m
+                        </button>
+                    </div>
                 )}
             </div>
 
-            {/* Advanced Filter Toolbar Component */}
+            {/* Thanh TÃ¬m kiáº¿m */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'white', padding: '16px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                 <div style={{ position: 'relative', width: '320px' }}>
                     <Search size={18} color="#94a3b8" style={{ position: 'absolute', top: '11px', left: '12px' }} />
-                    <input
-                        type="text"
-                        placeholder="TÃ¬m theo tÃªn, mÃ£ SKU..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', boxSizing: 'border-box', fontSize: '14px' }}
-                    />
+                    <input type="text" placeholder="TÃ¬m theo tÃªn, mÃ£ SKU..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', boxSizing: 'border-box', fontSize: '14px' }} />
                 </div>
                 <button onClick={() => setFilterType('ALL')} style={{ padding: '8px 16px', background: filterType === 'ALL' ? '#10b981' : 'white', color: filterType === 'ALL' ? 'white' : '#334155', border: filterType === 'ALL' ? 'none' : '1px solid #e2e8f0', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Táº¥t cáº£</button>
                 <button onClick={() => setFilterType('LOW_STOCK')} style={{ padding: '8px 16px', background: filterType === 'LOW_STOCK' ? '#10b981' : 'white', color: filterType === 'LOW_STOCK' ? 'white' : '#334155', border: filterType === 'LOW_STOCK' ? 'none' : '1px solid #e2e8f0', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Sáº¯p háº¿t</button>
                 <button onClick={() => setFilterType('OUT_OF_STOCK')} style={{ padding: '8px 16px', background: filterType === 'OUT_OF_STOCK' ? '#10b981' : 'white', color: filterType === 'OUT_OF_STOCK' ? 'white' : '#334155', border: filterType === 'OUT_OF_STOCK' ? 'none' : '1px solid #e2e8f0', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Háº¿t hÃ ng</button>
             </div>
 
-            {/* Main Container Components (Card-Grid View Mode) */}
+            {/* LÆ°á»›i Sáº£n pháº©m */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '24px' }}>
                 {filteredProducts.map((p) => {
                     const isOutOfStock = (p.inventory || 0) === 0;
                     return (
                         <div key={p.id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', position: 'relative', display: 'flex', flexDirection: 'column', border: '1px solid #f1f5f9' }}>
-
-                            <div style={{
-                                position: 'absolute', top: '12px', right: '12px',
-                                background: p.inventory > 0 ? '#ecfdf5' : '#fee2e2',
-                                color: p.inventory > 0 ? '#059669' : '#ef4444',
-                                padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', zIndex: 1
-                            }}>
+                            <div style={{ position: 'absolute', top: '12px', right: '12px', background: p.inventory > 0 ? '#ecfdf5' : '#fee2e2', color: p.inventory > 0 ? '#059669' : '#ef4444', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
                                 {p.inventory > 0 ? 'CÃ²n hÃ ng' : 'Háº¿t hÃ ng'}
                             </div>
                             <div style={{ position: 'absolute', top: '12px', left: '12px', background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', zIndex: 1 }}>
                                 {p.category_code}
                             </div>
-
                             <div style={{ height: '180px', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-                                {p.image_url ? (
-                                    <img src={p.image_url} alt={p.name} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
-                                ) : (
-                                    <span style={{ color: '#94a3b8', fontSize: '14px' }}>[ChÆ°a cáº¥u hÃ¬nh áº£nh]</span>
-                                )}
+                                {p.image_url ? <img src={p.image_url} alt={p.name} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} /> : <span style={{ color: '#94a3b8', fontSize: '14px' }}>[ChÆ°a cáº¥u hÃ¬nh áº£nh]</span>}
                             </div>
-
                             <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div>
                                     <h3 style={{ margin: '0 0 6px 0', fontSize: '15px', color: '#0f172a', fontWeight: 'bold', lineHeight: '1.4' }}>
                                         {p.name} {p.size_or_capacity ? `(${p.size_or_capacity} ${p.category_code === 'TV' ? 'inch' : p.category_code === 'TL' ? 'L' : p.category_code === 'MG' ? 'Kg' : 'HP'})` : ''}
                                     </h3>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                                            {p.sku}
-                                        </span>
-                                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-                                            {p.brand_code} â€¢ {p.type_detail || ''}
-                                        </span>
+                                        <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{p.sku}</span>
+                                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>{p.brand_code} â€¢ {p.type_detail || ''}</span>
                                     </div>
                                 </div>
-
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '12px' }}>
                                     <div>
                                         <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '16px' }}>{Number(p.sale_price).toLocaleString('vi-VN')} Ä‘</div>
                                         <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>/ {p.unit || 'CÃ¡i'}</div>
@@ -1916,24 +1948,10 @@ function Products() {
                                         <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>Tá»“n kho</div>
                                     </div>
                                 </div>
-
                                 {(canEdit || canDelete) && (
                                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
-                                        {canEdit && (
-                                            <button onClick={() => openEditModal(p)} style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}>
-                                                <Edit size={14} />
-                                            </button>
-                                        )}
-
-                                        {/* Ã‰p kiá»ƒu Number(p.inventory) Ä‘á»ƒ so sÃ¡nh chÃ­nh xÃ¡c */}
-                                        {canDelete && Number(p.inventory) === 0 && (
-                                            <button
-                                                onClick={() => handleDelete(p.id, p.name)}
-                                                style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        )}
+                                        {canEdit && <button onClick={() => openEditModal(p)} style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}><Edit size={14} /></button>}
+                                        {canDelete && Number(p.inventory) === 0 && <button onClick={() => handleDelete(p.id, p.name)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={14} /></button>}
                                     </div>
                                 )}
                             </div>
@@ -1942,56 +1960,60 @@ function Products() {
                 })}
             </div>
 
-            {/* Floating System Modal Box Framework */}
+            {/* MODAL THÃŠM KHO */}
+            {isWhModalOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                    <div style={{ background: 'white', padding: '24px', borderRadius: '16px', width: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+                        <h3 style={{ margin: '0 0 20px 0', color: '#3b82f6', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Home size={20} /> Táº¡o Kho HÃ ng Má»›i
+                        </h3>
+                        <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '16px', lineHeight: '1.5' }}>
+                            Sau khi táº¡o kho, há»‡ thá»‘ng sáº½ <b>tá»± Ä‘á»™ng khá»Ÿi táº¡o 3000 vá»‹ trÃ­ ká»‡</b> (Zone A, B, C) cho kho nÃ y. QuÃ¡ trÃ¬nh nÃ y diá»…n ra tá»± Ä‘á»™ng.
+                        </p>
+                        <form onSubmit={handleCreateWarehouse}>
+                            <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>TÃªn Kho *</label>
+                            <input
+                                required autoFocus
+                                value={newWarehouseName}
+                                onChange={(e) => setNewWarehouseName(e.target.value)}
+                                style={{ width: '100%', padding: '10px', marginTop: '6px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }}
+                                placeholder="VD: Kho Tá»•ng DÄ© An..."
+                            />
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                                <button type="button" onClick={() => setIsWhModalOpen(false)} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Há»§y</button>
+                                <button type="submit" disabled={loading} style={{ padding: '10px 24px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                                    {loading ? 'Äang táº¡o...' : 'Táº¡o Kho'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL THÃŠM Sáº¢N PHáº¨M */}
             {isModalOpen && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-                    <div style={{ background: 'white', padding: '24px', borderRadius: '16px', width: '480px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+                    <div style={{ background: 'white', padding: '24px', borderRadius: '16px', width: '480px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
                         <h3 style={{ margin: '0 0 20px 0', color: '#10b981', fontSize: '18px', fontWeight: 'bold' }}>
                             {editingId ? 'Cáº­p nháº­t sáº£n pháº©m' : 'ThÃªm sáº£n pháº©m má»›i'}
                         </h3>
-
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-                            {/* Row 1: SKU Preview & Unit */}
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <div style={{ flex: 1 }}>
                                     <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>MÃ£ SKU (Preview)</label><br />
-                                    <input
-                                        readOnly
-                                        value={editingId ? (products.find(p => p.id === editingId)?.sku || '') : skuPreview}
-                                        style={{
-                                            width: '100%', padding: '10px', marginTop: '6px',
-                                            borderRadius: '8px', border: '1px solid #10b981',
-                                            backgroundColor: '#ecfdf5', color: '#059669',
-                                            fontWeight: 'bold', boxSizing: 'border-box', fontSize: '14px'
-                                        }}
-                                    />
-                                    <small style={{ color: '#64748b', fontSize: '11px' }}>
-                                        {editingId ? 'MÃ£ SKU khÃ´ng Ä‘á»•i khi sá»­a' : 'MÃ£ sáº½ tá»± Ä‘á»™ng táº¡o khi lÆ°u'}
-                                    </small>
+                                    <input readOnly value={editingId ? (products.find(p => p.id === editingId)?.sku || '') : skuPreview} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #10b981', backgroundColor: '#ecfdf5', color: '#059669', fontWeight: 'bold', boxSizing: 'border-box', fontSize: '14px' }} />
                                 </div>
                                 <div style={{ flex: 1 }}>
                                     <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>ÄÆ¡n vá»‹</label><br />
-                                    <input
-                                        readOnly
-                                        value={formData.unit}
-                                        style={{
-                                            width: '100%', padding: '10px', marginTop: '6px',
-                                            borderRadius: '8px', border: '1px solid #e2e8f0',
-                                            backgroundColor: '#f8fafc', color: '#64748b',
-                                            boxSizing: 'border-box', fontSize: '13px'
-                                        }}
-                                    />
+                                    <input readOnly value={formData.unit} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#64748b', boxSizing: 'border-box', fontSize: '13px' }} />
                                 </div>
                             </div>
 
-                            {/* Row 2: Full Product Title Input */}
                             <div>
                                 <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>TÃªn sáº£n pháº©m *</label><br />
                                 <input required name="name" value={formData.name} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }} placeholder="Nháº­p tÃªn chi tiáº¿t sáº£n pháº©m..." />
                             </div>
 
-                            {/* Row 3: Category & Brand Selection */}
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <div style={{ flex: 1 }}>
                                     <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Danh má»¥c *</label><br />
@@ -2005,38 +2027,19 @@ function Products() {
                                 <div style={{ flex: 1 }}>
                                     <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>ThÆ°Æ¡ng hiá»‡u *</label><br />
                                     <select name="brand_code" value={formData.brand_code} onChange={handleChange} disabled={editingId !== null} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: editingId ? '#f8fafc' : 'white', fontSize: '13px' }}>
-                                        {currentCategory?.brands.map(brand => (
-                                            <option key={brand.code} value={brand.code}>{brand.name}</option>
-                                        ))}
+                                        {currentCategory?.brands.map(brand => <option key={brand.code} value={brand.code}>{brand.name}</option>)}
                                     </select>
                                 </div>
                             </div>
 
-                            {/* Row 4: Size/Capacity with dynamic unit */}
                             <div>
                                 <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>{currentCategory?.sizeLabel || 'KÃ­ch thÆ°á»›c'} *</label>
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                                    <input
-                                        required
-                                        type="number"
-                                        step="0.5"
-                                        name="size_or_capacity"
-                                        value={formData.size_or_capacity}
-                                        onChange={handleChange}
-                                        style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '13px' }}
-                                        placeholder={currentCategory?.sizeHint || 'VD: 55'}
-                                    />
-                                    <span style={{
-                                        padding: '10px 16px', backgroundColor: '#f1f5f9',
-                                        borderRadius: '8px', color: '#64748b', fontWeight: 'bold',
-                                        display: 'flex', alignItems: 'center'
-                                    }}>
-                                        {currentCategory?.sizeUnit || ''}
-                                    </span>
+                                    <input required type="number" step="0.5" name="size_or_capacity" value={formData.size_or_capacity} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '13px' }} placeholder={currentCategory?.sizeHint || 'VD: 55'} />
+                                    <span style={{ padding: '10px 16px', backgroundColor: '#f1f5f9', borderRadius: '8px', color: '#64748b', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>{currentCategory?.sizeUnit || ''}</span>
                                 </div>
                             </div>
 
-                            {/* Row 4b: Type Detail (for Washing Machine only) */}
                             {currentCategory?.hasTypeDetail && (
                                 <div>
                                     <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>PhÃ¢n loáº¡i mÃ¡y giáº·t *</label><br />
@@ -2048,13 +2051,11 @@ function Products() {
                                 </div>
                             )}
 
-                            {/* Row 5: Image URL */}
                             <div>
                                 <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>áº¢nh sáº£n pháº©m</label><br />
-                                <input name="image_url" value={formData.image_url} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }} placeholder="DÃ¡n liÃªn káº¿t URL áº£nh vÃ o Ä‘Ã¢y..." />
+                                <input name="image_url" value={formData.image_url} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', outline: 'none', fontSize: '13px' }} placeholder="DÃ¡n liÃªn káº¿t URL áº£nh..." />
                             </div>
 
-                            {/* Row 6: Price & Inventory */}
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <div style={{ flex: 1 }}>
                                     <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>ÄÆ¡n giÃ¡ (Ä‘) *</label><br />
@@ -2066,17 +2067,16 @@ function Products() {
                                 </div>
                             </div>
 
-                            {/* Row 7: Warehouse Selection */}
+                            {/* CHá»– NÃ€Y ÄÃƒ ÄÆ¯á»¢C NÃ‚NG Cáº¤P Äá»‚ Tá»° Äá»˜NG HIá»‚N THá»Š DANH SÃCH KHO Tá»ª DATABASE */}
                             <div>
-                                <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>Chá»n Kho hÃ ng *</label><br />
-                                <select name="warehouse_id" value={formData.warehouse_id} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '13px' }}>
-                                    <option value={1}>Kho ChÃ­nh (DÄ© An)</option>
-                                    <option value={2}>Kho BÃ u BÃ ng</option>
-                                    <option value={3}>Kho TP.HCM</option>
+                                <label style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold' }}>LÆ°u táº¡i Kho hÃ ng *</label><br />
+                                <select required name="warehouse_id" value={formData.warehouse_id} onChange={handleChange} style={{ width: '100%', padding: '10px', marginTop: '6px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '13px' }}>
+                                    {warehouses.map(wh => (
+                                        <option key={wh.id} value={wh.id}>{wh.name}</option>
+                                    ))}
                                 </select>
                             </div>
 
-                            {/* Footer Control Panel Buttons */}
                             <div style={{ display: 'flex', gap: '12px', marginTop: '10px', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setIsModalOpen(false)} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Há»§y</button>
                                 <button type="submit" disabled={loading} style={{ padding: '10px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
@@ -2095,12 +2095,15 @@ export default Products;
 </file>
 <file name="Sales.jsx">
 import { useState, useEffect } from 'react';
-import { 
-  ShoppingCart, Plus, Eye, X, RefreshCw, ClipboardList, 
-  Check, CheckCircle2, Trash2, DollarSign, User 
+import {
+  ShoppingCart, Plus, Eye, X, RefreshCw, ClipboardList,
+  Check, CheckCircle2, Trash2, DollarSign, User
 } from 'lucide-react';
 
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+// Há»‡ thá»‘ng tá»± Ä‘á»™ng quÃ©t xem trang web Ä‘ang cháº¡y á»Ÿ Ä‘Ã¢u
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:5000/api'               // Náº¿u cháº¡y á»Ÿ mÃ¡y nhÃ  -> Gá»i Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Náº¿u cháº¡y trÃªn Vercel -> Gá»i Render
 
 function Sales() {
   const [activeTab, setActiveTab] = useState('create'); // 'create' | 'list'
@@ -2108,12 +2111,12 @@ function Sales() {
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   // State form táº¡o Ä‘Æ¡n
   const [items, setItems] = useState([]);
   const [customerId, setCustomerId] = useState('');
   const [submitResult, setSubmitResult] = useState(null);
-  
+
   // State modal chi tiáº¿t
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -2122,12 +2125,12 @@ function Sales() {
   const currentUser = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
   const userRole = currentUser?.role || '';
   const userLevel = currentUser?.level || '';
-  
+
   // Kiá»ƒm tra quyá»n duyá»‡t Ä‘Æ¡n (Admin hoáº·c TrÆ°á»Ÿng phÃ²ng Sale)
   const canApprove = userRole === 'ADMIN' || (userRole === 'SALES' && userLevel === 'MANAGER');
 
   const getAuthHeaders = () => {
-    return { 
+    return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     };
@@ -2264,7 +2267,7 @@ function Sales() {
           <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold' }}>Quáº£n lÃ½ Kinh doanh (Sales)</h2>
           <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>Láº­p Ä‘Æ¡n xuáº¥t bÃ¡n thiáº¿t bá»‹ Ä‘iá»‡n mÃ¡y</p>
         </div>
-        
+
         <div style={{ display: 'flex', gap: '4px', background: 'white', padding: '4px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
           <button onClick={() => setActiveTab('create')} style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', background: activeTab === 'create' ? '#3b82f6' : 'transparent', color: activeTab === 'create' ? 'white' : '#64748b' }}>
             <Plus size={16} style={{ marginRight: '6px' }} /> Láº­p Ä‘Æ¡n má»›i
@@ -2314,7 +2317,7 @@ function Sales() {
                       </select>
                       <input type="number" min="1" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} style={{ width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }} />
                       <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} style={{ width: '130px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} placeholder="ÄÆ¡n giÃ¡ láº»" />
-                      <button type="button" onClick={() => handleRemoveItem(index)} style={{ padding: '10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><X size={16}/></button>
+                      <button type="button" onClick={() => handleRemoveItem(index)} style={{ padding: '10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><X size={16} /></button>
                     </div>
                   ))}
                 </div>
@@ -2325,7 +2328,7 @@ function Sales() {
           </div>
 
           <div style={{ flex: 1, background: '#0f172a', color: 'white', padding: '24px', borderRadius: '16px', height: 'fit-content' }}>
-            <h4 style={{ margin: '0 0 16px 0', color: '#3b82f6', display: 'flex', gap: '6px' }}><DollarSign size={18}/>Tá»•ng giÃ¡ trá»‹ Ä‘Æ¡n hÃ ng</h4>
+            <h4 style={{ margin: '0 0 16px 0', color: '#3b82f6', display: 'flex', gap: '6px' }}><DollarSign size={18} />Tá»•ng giÃ¡ trá»‹ Ä‘Æ¡n hÃ ng</h4>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '22px', fontWeight: 'bold', color: '#34d399' }}>
               <span>Tá»”NG TIá»€N:</span>
               <span>{totalAmount.toLocaleString('vi-VN')} Ä‘</span>
@@ -2365,7 +2368,7 @@ function Sales() {
                         </span>
                       </td>
                       <td style={{ padding: '14px', textAlign: 'center' }}>
-                        <button onClick={() => fetchOrderDetails(order.id)} style={{ padding: '6px 12px', background: '#eff6ff', color: '#1d4ed8', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', gap: '4px', alignItems: 'center' }}><Eye size={14}/> Chi tiáº¿t</button>
+                        <button onClick={() => fetchOrderDetails(order.id)} style={{ padding: '6px 12px', background: '#eff6ff', color: '#1d4ed8', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', gap: '4px', alignItems: 'center' }}><Eye size={14} /> Chi tiáº¿t</button>
                       </td>
                     </tr>
                   ))}
@@ -2382,7 +2385,7 @@ function Sales() {
           <div style={{ background: 'white', borderRadius: '16px', width: '700px', padding: '24px', maxHeight: '85vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
               <h3 style={{ margin: 0 }}>Chi tiáº¿t Ä‘Æ¡n hÃ ng: {selectedOrder.order_code}</h3>
-              <button onClick={() => setShowDetailModal(false)} style={{ border: 'none', background: '#f1f5f9', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}><X/></button>
+              <button onClick={() => setShowDetailModal(false)} style={{ border: 'none', background: '#f1f5f9', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}><X /></button>
             </div>
 
             <p><strong>KhÃ¡ch hÃ ng:</strong> {selectedOrder.customer_name}</p>
@@ -2438,6 +2441,11 @@ export default Sales;
 import { useState, useEffect } from 'react';
 import { Package, MapPin, RefreshCw, Layers } from 'lucide-react';
 
+// Há»‡ thá»‘ng tá»± Ä‘á»™ng quÃ©t xem trang web Ä‘ang cháº¡y á»Ÿ Ä‘Ã¢u Ä‘á»ƒ gá»i Ä‘Ãºng API
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://doan-qlk.onrender.com/api';
+
 function Warehouse() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2448,7 +2456,9 @@ function Warehouse() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('https://doan-qlk.onrender.com/api/inventory', {
+      
+      // ÄÃ£ thay link cá»©ng báº±ng API_BASE
+      const response = await fetch(`${API_BASE}/inventory`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

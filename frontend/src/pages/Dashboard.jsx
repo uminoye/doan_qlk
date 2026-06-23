@@ -183,28 +183,6 @@ function Dashboard() {
             ))}
           </div>
         </div>
-
-        {/* Nút Setup nhanh (Cho Admin) */}
-        <div style={{ flex: 1, minWidth: '300px', background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#1e293b', fontSize: '16px', fontWeight: 'bold' }}>🔧 Cấu hình hệ thống</h3>
-          <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
-            Nếu đây là lần đầu tiên khởi chạy dự án, hãy nhấn nút bên dưới để hệ thống tự động sinh ra 3000 vị trí lưu trữ (Bin) trong cơ sở dữ liệu.
-          </p>
-          <button 
-            onClick={generateBins} 
-            disabled={setupLoading}
-            style={{ width: '100%', padding: '12px', background: setupLoading ? '#cbd5e1' : '#0f172a', color: 'white', border: 'none', borderRadius: '8px', cursor: setupLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold', marginTop: '10px' }}
-          >
-            {setupLoading ? 'Đang đổ móng...' : 'Tạo 3000 Kệ/Bin'}
-          </button>
-          
-          {setupMessage && (
-            <div style={{ marginTop: '16px', padding: '12px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', background: setupMessage.includes('✅') ? '#d1fae5' : '#fee2e2', color: setupMessage.includes('✅') ? '#059669' : '#ef4444' }}>
-              {setupMessage}
-            </div>
-          )}
-        </div>
-
       </div>
 
       <style>{`

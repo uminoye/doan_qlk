@@ -4,6 +4,8 @@ import {
   ClipboardList, Check, CheckCircle2
 } from 'lucide-react';
 
+// API Base URL
+// Hệ thống tự động quét xem trang web đang chạy ở đâu
 const API_BASE = window.location.hostname === 'localhost' 
   ? 'http://localhost:5000/api'               // Nếu chạy ở máy nhà -> Gọi Localhost
   : 'https://doan-qlk.onrender.com/api';      // Nếu chạy trên Vercel -> Gọi Render
