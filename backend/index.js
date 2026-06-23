@@ -40,6 +40,9 @@ app.use('/api/sales', salesRoutes);
 const authRoutes = require('./src/routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+const warehouseRoutes = require('./src/routes/warehouseRoutes');
+app.use('/api/warehouses', warehouseRoutes);
+
 // Development APIs
 app.get('/api/setup', async (req, res) => {
   try {
