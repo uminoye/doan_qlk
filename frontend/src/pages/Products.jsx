@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Home } from 'lucide-react';
 
-// CHÚ Ý: Đổi link này khi đẩy lên Render nhé
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Nếu chạy ở máy nhà -> Gọi Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Nếu chạy trên Vercel -> Gọi Render
 
 const categoryConfig = {
     TV: {

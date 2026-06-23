@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { 
-  ShoppingCart, Plus, Eye, X, RefreshCw, ClipboardList, 
-  Check, CheckCircle2, Trash2, DollarSign, User 
+import {
+  ShoppingCart, Plus, Eye, X, RefreshCw, ClipboardList,
+  Check, CheckCircle2, Trash2, DollarSign, User
 } from 'lucide-react';
 
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+// Hệ thống tự động quét xem trang web đang chạy ở đâu
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:5000/api'               // Nếu chạy ở máy nhà -> Gọi Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Nếu chạy trên Vercel -> Gọi Render
 
 function Sales() {
   const [activeTab, setActiveTab] = useState('create'); // 'create' | 'list'
@@ -12,12 +15,12 @@ function Sales() {
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   // State form tạo đơn
   const [items, setItems] = useState([]);
   const [customerId, setCustomerId] = useState('');
   const [submitResult, setSubmitResult] = useState(null);
-  
+
   // State modal chi tiết
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -26,12 +29,12 @@ function Sales() {
   const currentUser = (userString && userString !== "undefined") ? JSON.parse(userString) : null;
   const userRole = currentUser?.role || '';
   const userLevel = currentUser?.level || '';
-  
+
   // Kiểm tra quyền duyệt đơn (Admin hoặc Trưởng phòng Sale)
   const canApprove = userRole === 'ADMIN' || (userRole === 'SALES' && userLevel === 'MANAGER');
 
   const getAuthHeaders = () => {
-    return { 
+    return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     };
@@ -168,7 +171,7 @@ function Sales() {
           <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: 'bold' }}>Quản lý Kinh doanh (Sales)</h2>
           <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>Lập đơn xuất bán thiết bị điện máy</p>
         </div>
-        
+
         <div style={{ display: 'flex', gap: '4px', background: 'white', padding: '4px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
           <button onClick={() => setActiveTab('create')} style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', background: activeTab === 'create' ? '#3b82f6' : 'transparent', color: activeTab === 'create' ? 'white' : '#64748b' }}>
             <Plus size={16} style={{ marginRight: '6px' }} /> Lập đơn mới
@@ -218,7 +221,7 @@ function Sales() {
                       </select>
                       <input type="number" min="1" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} style={{ width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }} />
                       <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} style={{ width: '130px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} placeholder="Đơn giá lẻ" />
-                      <button type="button" onClick={() => handleRemoveItem(index)} style={{ padding: '10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><X size={16}/></button>
+                      <button type="button" onClick={() => handleRemoveItem(index)} style={{ padding: '10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><X size={16} /></button>
                     </div>
                   ))}
                 </div>
@@ -229,7 +232,7 @@ function Sales() {
           </div>
 
           <div style={{ flex: 1, background: '#0f172a', color: 'white', padding: '24px', borderRadius: '16px', height: 'fit-content' }}>
-            <h4 style={{ margin: '0 0 16px 0', color: '#3b82f6', display: 'flex', gap: '6px' }}><DollarSign size={18}/>Tổng giá trị đơn hàng</h4>
+            <h4 style={{ margin: '0 0 16px 0', color: '#3b82f6', display: 'flex', gap: '6px' }}><DollarSign size={18} />Tổng giá trị đơn hàng</h4>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '22px', fontWeight: 'bold', color: '#34d399' }}>
               <span>TỔNG TIỀN:</span>
               <span>{totalAmount.toLocaleString('vi-VN')} đ</span>
@@ -269,7 +272,7 @@ function Sales() {
                         </span>
                       </td>
                       <td style={{ padding: '14px', textAlign: 'center' }}>
-                        <button onClick={() => fetchOrderDetails(order.id)} style={{ padding: '6px 12px', background: '#eff6ff', color: '#1d4ed8', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', gap: '4px', alignItems: 'center' }}><Eye size={14}/> Chi tiết</button>
+                        <button onClick={() => fetchOrderDetails(order.id)} style={{ padding: '6px 12px', background: '#eff6ff', color: '#1d4ed8', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', gap: '4px', alignItems: 'center' }}><Eye size={14} /> Chi tiết</button>
                       </td>
                     </tr>
                   ))}
@@ -286,7 +289,7 @@ function Sales() {
           <div style={{ background: 'white', borderRadius: '16px', width: '700px', padding: '24px', maxHeight: '85vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
               <h3 style={{ margin: 0 }}>Chi tiết đơn hàng: {selectedOrder.order_code}</h3>
-              <button onClick={() => setShowDetailModal(false)} style={{ border: 'none', background: '#f1f5f9', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}><X/></button>
+              <button onClick={() => setShowDetailModal(false)} style={{ border: 'none', background: '#f1f5f9', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}><X /></button>
             </div>
 
             <p><strong>Khách hàng:</strong> {selectedOrder.customer_name}</p>

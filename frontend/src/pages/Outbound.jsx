@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Truck, Plus, ClipboardList, CheckCircle2, RefreshCw, X, PackageOpen } from 'lucide-react';
 
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+// Hệ thống tự động quét xem trang web đang chạy ở đâu
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Nếu chạy ở máy nhà -> Gọi Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Nếu chạy trên Vercel -> Gọi Render
 
 function Outbound() {
   const [activeTab, setActiveTab] = useState('create');

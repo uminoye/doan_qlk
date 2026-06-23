@@ -28,13 +28,17 @@ const addProduct = async (productData) => {
 // 3. Hàm chỉnh sửa thông tin sản phẩm
 const editProduct = async (id, productData) => {
   try {
-    const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku } = productData;
+    // Thêm chữ inventory vào danh sách lấy dữ liệu
+    const { name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku, inventory } = productData;
+    
     const result = await db.query(
       `UPDATE products 
        SET name = $1, category_code = $2, brand_code = $3, size_or_capacity = $4, 
-           type_detail = $5, unit = $6, sale_price = $7, image_url = $8, sku = $9
-       WHERE id = $10 RETURNING *`,
-      [name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku, id]
+           type_detail = $5, unit = $6, sale_price = $7, image_url = $8, sku = $9, 
+           inventory = $10 
+       WHERE id = $11 RETURNING *`,
+      // Truyền thêm biến inventory vào vị trí $10, id đẩy lên $11
+      [name, category_code, brand_code, size_or_capacity, type_detail, unit, sale_price, image_url, sku, inventory, id]
     );
     return result.rows[0];
   } catch (error) {

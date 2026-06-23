@@ -4,8 +4,9 @@ import {
   ClipboardList, Check, CheckCircle2
 } from 'lucide-react';
 
-// API Base URL
-const API_BASE = 'https://doan-qlk.onrender.com/api';
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'               // Nếu chạy ở máy nhà -> Gọi Localhost
+  : 'https://doan-qlk.onrender.com/api';      // Nếu chạy trên Vercel -> Gọi Render
 
 // Mapping Zone Code -> Tên hiển thị
 const zoneConfig = {

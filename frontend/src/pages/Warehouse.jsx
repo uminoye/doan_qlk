@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Package, MapPin, RefreshCw, Layers } from 'lucide-react';
 
+// Hệ thống tự động quét xem trang web đang chạy ở đâu để gọi đúng API
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://doan-qlk.onrender.com/api';
+
 function Warehouse() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +16,9 @@ function Warehouse() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('https://doan-qlk.onrender.com/api/inventory', {
+      
+      // Đã thay link cứng bằng API_BASE
+      const response = await fetch(`${API_BASE}/inventory`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
