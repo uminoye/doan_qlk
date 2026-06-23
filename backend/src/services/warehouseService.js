@@ -15,15 +15,14 @@ const addWarehouseWithLocations = async (warehouseData) => {
   try {
     await db.query('BEGIN'); // Mở Giao dịch (Transaction)
 
-    const { name, address } = warehouseData;
+    const { name } = warehouseData; // Chỉ lấy name, bỏ address
     
-    // 1. Tạo kho mới
+    // 1. Tạo kho mới (Đã bỏ cột address)
     const insertWhQuery = `
-      INSERT INTO warehouses (name, address) 
-      VALUES ($1, $2) RETURNING *
+      INSERT INTO warehouses (name) 
+      VALUES ($1) RETURNING *
     `;
-    // Nếu front-end không gửi address, để tạm chuỗi rỗng để không bị lỗi
-    const whResult = await db.query(insertWhQuery, [name, address || '']); 
+    const whResult = await db.query(insertWhQuery, [name]); 
     const newWarehouse = whResult.rows[0];
 
     // 2. Sinh 3000 kệ tự động cho kho này
